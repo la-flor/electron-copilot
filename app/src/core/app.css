@@ -1,0 +1,16 @@
+main {
+  height: 100%;
+  width: 100%;
+
+  nav {
+    display: flex;
+    justify-content: center;
+    padding: 25px 0px 25px 0px;
+
+    ul {
+      display: flex;
+      gap: 15px;
+      list-style-type: none;
+    }
+  }
+}
