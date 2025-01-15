@@ -1,26 +1,19 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import "./home.css";
-
-const BASE_URL = "http://localhost:11434/";
+import { streamComplete } from "../services/stream";
 
 const Home = () => {
-  const [userPrompt, setUserPrompt] = useState("Give me a 5 line poem");
+  const [userPrompt, setUserPrompt] = useState("Provide me with a 5 line poem");
   const [response, setResponse] = useState("");
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
-      const resp = await fetch(BASE_URL + "api/generate", {
-        method: "POST",
-        body: JSON.stringify({
-          model: "llama3.2",
-          prompt: userPrompt,
-          stream: false,
-        }),
-      });
-
-      setResponse(JSON.stringify((await resp.json()).response));
+      for await (const chunk of streamComplete(userPrompt)) {
+        setResponse((prev) => prev + chunk);
+      }
     } catch (err) {
-      setResponse(JSON.stringify(err));
+      console.log(err);
     }
   };
   return (
