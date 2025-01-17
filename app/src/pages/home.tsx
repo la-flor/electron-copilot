@@ -6,7 +6,7 @@ const Home = () => {
   const [userPrompt, setUserPrompt] = useState("Provide me with a 5 line poem");
   const [response, setResponse] = useState("");
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       for await (const chunk of streamComplete(userPrompt)) {
@@ -34,7 +34,9 @@ const Home = () => {
           placeholder="Type your message here..."
         ></textarea>
 
-        <button type="submit">Send</button>
+        <button id="user-submit" type="submit">
+          Send
+        </button>
       </form>
     </div>
   );

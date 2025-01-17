@@ -25,6 +25,9 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
         </Routes>
+        <footer>
+          <a href="#">Github</a>
+        </footer>
       </main>
     </BrowserRouter>
   );
