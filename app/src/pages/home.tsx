@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import "./home.css";
+import "./home.scss";
 import { streamComplete } from "../services/stream";
 
 const Home = () => {
@@ -34,7 +34,11 @@ const Home = () => {
           placeholder="Type your message here..."
         ></textarea>
 
-        <button id="user-submit" type="submit">
+        <button
+          id="user-submit"
+          type="submit"
+          className="btn btn-primary btn-lg"
+        >
           Send
         </button>
       </form>

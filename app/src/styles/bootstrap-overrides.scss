@@ -1,0 +1,9 @@
+// Variable overrides first
+$enable-shadows: true;
+$prefix: "mo-";
+$button-hover-color: rgba(15, 15, 15, 0.99);
+
+// Then import Bootstrap
+@import "./bootswatch/minty/variables";
+@import "../node_modules/bootstrap/scss/bootstrap";
+@import "./bootswatch/minty/bootswatch";
