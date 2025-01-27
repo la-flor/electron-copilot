@@ -1,6 +1,8 @@
 const BASE_URL = "http://localhost:11434/";
 
-export async function* streamComplete(Prompt: string): AsyncGenerator<string> {
+export async function* streamComplete(
+  Prompt: string
+): AsyncGenerator<{ chunk: string; done: boolean }> {
   const response = await fetch(BASE_URL + "api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -24,7 +26,7 @@ export async function* streamComplete(Prompt: string): AsyncGenerator<string> {
         try {
           const j = JSON.parse(chunk);
           if ("response" in j) {
-            yield j.response;
+            yield { chunk: j.response, done: j.done };
           } else if ("error" in j) {
             throw new Error(j.error);
           }

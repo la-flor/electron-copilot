@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
-  padding: 0px 25px 0px 25px;
+  padding: 15px 25px;
 }
 
 #chat-output {
@@ -13,6 +13,20 @@
   border: 1px solid gray;
   border-radius: 7px;
   overflow-y: scroll;
+
+  article:nth-child(even):not(:last-child) {
+    padding-bottom: 2.5rem;
+    border-bottom: 1px dashed #f7f7f9;
+  }
+
+  article:nth-child(odd) {
+    padding-bottom: 1rem;
+    text-align: right;
+
+    &:not(:first-child) {
+      padding-top: 2.5rem;
+    }
+  }
 }
 
 form {

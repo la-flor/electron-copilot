@@ -1,34 +1,47 @@
 import { FormEvent, useState } from "react";
-import "./home.scss";
 import { streamComplete } from "../services/stream";
+import "./home.scss";
 
 const Home = () => {
   const [userPrompt, setUserPrompt] = useState("Provide me with a 5 line poem");
-  const [response, setResponse] = useState("");
+  const [response, setResponse] = useState<string[]>([]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      for await (const chunk of streamComplete(userPrompt)) {
-        setResponse((prev) => prev + chunk);
+      setResponse((prev) => {
+        prev.push(userPrompt);
+        prev.push("");
+        return prev;
+      });
+      for await (const { chunk } of streamComplete(userPrompt)) {
+        setResponse((prev) => {
+          if (prev.length === 0) {
+            return [chunk];
+          }
+          const lastIdx = prev.length - 1;
+          return [...prev.slice(0, lastIdx), prev[lastIdx] + chunk];
+        });
       }
     } catch (err) {
       console.log(err);
     }
   };
+
   return (
     <div id="home">
       <div id="chat-output">
-        {response.split("\\n").map((line, index) => (
-          <p key={index}>{line}</p>
-        ))}
+        {response.map((resp) =>
+          resp
+            .split("\\n")
+            .map((line, index) => <article key={index}>{line}</article>)
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>
         <textarea
           id="chat-input"
-          rows={10}
-          cols={50}
+          rows={4}
           value={userPrompt}
           onChange={(e) => setUserPrompt(e.target.value)}
           placeholder="Type your message here..."
