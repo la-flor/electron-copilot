@@ -1,3 +1,10 @@
+# Custom #
+######################
+dev-database.db
+
+# Electron Defaults: #
+######################
+
 # Logs
 logs
 *.log
