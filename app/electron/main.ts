@@ -47,6 +47,11 @@ ipcMain.handle("database:fetchUsers", () => {
   return stmt.all();
 });
 
+ipcMain.handle("database:fetchUser", (_event, id: number) => {
+  const stmt = db.prepare("SELECT * FROM user WHERE id = ?");
+  return stmt.get(id);
+});
+
 ipcMain.handle("database:addUser", (_event, user) => {
   const stmt = db.prepare(
     "INSERT INTO user (first_name, last_name, email, password) VALUES (?, ?, ?, ?)"
