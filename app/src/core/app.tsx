@@ -6,6 +6,7 @@ import Home from "../pages/home";
 import "./app.scss";
 import Navbar from "../components/navbar";
 import useTheme from "../hooks/useTheme";
+import { Automations } from "../pages/automations";
 
 const root = createRoot(document.body);
 
@@ -18,6 +19,7 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/automations" element={<Automations />} />
         </Routes>
         <footer>
           <a href="#">Github</a>

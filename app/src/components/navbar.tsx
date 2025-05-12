@@ -1,4 +1,7 @@
+import { useLocation } from "react-router";
+
 const Navbar = () => {
+  const location = useLocation();
   return (
     <nav className="navbar navbar-expand-sm bg-body-tertiary">
       <div className="container-fluid">
@@ -29,7 +32,18 @@ const Navbar = () => {
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/settings">
+              <a
+                className={`nav-link ${
+                  location.pathname === "/automations" ? "active" : ""
+                }`}
+                aria-current={
+                  location.pathname === "/automations" ? "page" : false
+                }
+                href="/automations"
+              >
+                Automations
+              </a>
+            </li>
                 Settings
               </a>
             </li>
