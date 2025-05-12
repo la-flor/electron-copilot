@@ -1,0 +1,12 @@
+#refresh {
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  &:hover {
+    color: rgb(174, 174, 174);
+  }
+}

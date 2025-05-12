@@ -22,12 +22,26 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav">
             <li className="nav-item">
-              <a className="nav-link active" aria-current="page" href="/">
+              <a
+                className={`nav-link ${
+                  location.pathname === "/" ? "active" : ""
+                }`}
+                aria-current={location.pathname === "/" ? "page" : false}
+                href="/"
+              >
                 Chat
               </a>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="/dashboard">
+              <a
+                className={`nav-link ${
+                  location.pathname === "/dashboard" ? "active" : ""
+                }`}
+                aria-current={
+                  location.pathname === "/dashboard" ? "page" : false
+                }
+                href="/dashboard"
+              >
                 Dashboard
               </a>
             </li>
@@ -44,6 +58,16 @@ const Navbar = () => {
                 Automations
               </a>
             </li>
+            <li className="nav-item">
+              <a
+                className={`nav-link ${
+                  location.pathname === "/settings" ? "active" : ""
+                }`}
+                aria-current={
+                  location.pathname === "/settings" ? "page" : false
+                }
+                href="/settings"
+              >
                 Settings
               </a>
             </li>
