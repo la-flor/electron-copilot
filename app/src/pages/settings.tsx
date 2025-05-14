@@ -15,6 +15,16 @@ export const Settings = () => {
     getUser();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      document.documentElement.dataset.bsTheme = user.dark ? 'dark' : 'light';
+    }
+    // Optional: Cleanup function to reset theme if user logs out or component unmounts
+    // return () => {
+    //   document.documentElement.removeAttribute('data-bs-theme'); // Or set to a default theme
+    // };
+  }, [user]); // This effect runs when the `user` state changes
+
   const handleDarkModeChange = async () => {
     if (user) {
       const newDarkValue = user.dark ? 0 : 1;
