@@ -10,27 +10,40 @@ import Dashboard from "../pages/dashboard";
 import { Automations } from "../pages/automations";
 import { Settings } from "../pages/settings";
 import LoginPage from "../pages/LoginPage";
+import { AuthProvider } from "../context/AuthContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const root = createRoot(document.body);
 
-const App = () => {
+// AppWrapper to ensure AuthProvider is within BrowserRouter
+const AppWrapper = () => {
   useTheme();
-
   return (
-    <BrowserRouter>
-      <main>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
+    <main>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/automations" element={<Automations />} />
           <Route path="/settings" element={<Settings />} />
-        </Routes>
-        <footer>
-          <a href="#">Github</a>
-        </footer>
-      </main>
+        </Route>
+      </Routes>
+      <footer>
+        <a href="#">Github</a>
+      </footer>
+    </main>
+  );
+}
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppWrapper />
+      </AuthProvider>
     </BrowserRouter>
   );
 };

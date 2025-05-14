@@ -1,12 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./LoginPage.scss"; // We'll create this for styling
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./LoginPage.scss";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage: React.FC = () => {
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || "/home";
+
+  useEffect(() => {
+    // If already authenticated and not loading, redirect from login page
+    if (isAuthenticated && !isLoading) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate, from]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -21,9 +33,9 @@ const LoginPage: React.FC = () => {
       const result = await window.db.user.loginUser({ email, password });
       if (result.success && result.user) {
         console.log("Login successful", result.user);
-        // Store user session/token if needed, e.g., in context or localStorage
-        // For now, just navigate to dashboard
-        navigate("/dashboard");
+        login(result.user); // Update auth context
+        // Navigation is handled by the useEffect or will happen if 'from' is set
+        // navigate(from, { replace: true }); // This line is now handled by useEffect
       } else {
         setError(
           result.message || "Login failed. Please check your credentials."
@@ -34,6 +46,11 @@ const LoginPage: React.FC = () => {
       setError("An unexpected error occurred during login.");
     }
   };
+
+  // Don't render the form if we are still checking auth or already authenticated and about to redirect
+  if (isLoading || isAuthenticated) {
+    return <div>Loading...</div>; // Or some other placeholder
+  }
 
   return (
     <div className="login-page-container">
