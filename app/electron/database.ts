@@ -57,6 +57,24 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
     stmt.run(user.first_name, user.last_name, user.email, user.password);
   });
 
+  ipcMain.handle("database:loginUser", async (_event, { email, password }) => {
+    // IMPORTANT: In a real application, passwords should be hashed and compared securely.
+    // This is a simplified example and is NOT secure for production.
+    const stmt = db.prepare("SELECT * FROM user WHERE email = ? AND password = ? AND delete_time IS NULL");
+    const user = stmt.get(email, password);
+    if (user) {
+      return { success: true, user };
+    } else {
+      // Check if user exists with that email but wrong password for a more specific error
+      const userExistsStmt = db.prepare("SELECT * FROM user WHERE email = ? AND delete_time IS NULL");
+      const existingUser = userExistsStmt.get(email);
+      if (existingUser) {
+        return { success: false, message: "Invalid password." };
+      }
+      return { success: false, message: "User not found." };
+    }
+  });
+
   ipcMain.handle("database:updateUser", (_event, userPatch: Partial<User>) => {
     const { id, ...otherFields } = userPatch;
 

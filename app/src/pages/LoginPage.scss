@@ -1,0 +1,43 @@
+.login-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px); // Adjust based on your navbar/footer height
+  padding: 20px;
+  background-color: var(--bs-light); // Or your preferred background
+}
+
+.login-form-card {
+  background-color: var(--bs-body-bg);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+
+  h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--bs-body-color);
+  }
+
+  .form-group label {
+    font-weight: 500;
+    color: var(--bs-secondary-color);
+  }
+
+  .form-control {
+    &:focus {
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+  }
+
+  .alert {
+    margin-top: 1rem;
+  }
+
+  .btn-primary {
+    margin-top: 1rem;
+  }
+}

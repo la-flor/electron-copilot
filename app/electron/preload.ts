@@ -14,5 +14,9 @@ contextBridge.exposeInMainWorld("db", {
     ): Promise<void> => ipcRenderer.invoke("database:addUser", user),
     updateUser: (user: Partial<User>): Promise<any> =>
       ipcRenderer.invoke("database:updateUser", user),
+    loginUser: (
+      credentials: Pick<User, "email" | "password">
+    ): Promise<{ success: boolean; user?: User; message?: string }> =>
+      ipcRenderer.invoke("database:loginUser", credentials),
   },
 });

@@ -10,6 +10,9 @@ declare global {
         fetchUser: (id: number) => Promise<User>;
         fetchUsers: () => Promise<User[]>;
         updateUser: (user: Partial<User>) => Promise<any>;
+        loginUser: (
+          credentials: Pick<User, "email" | "password">
+        ) => Promise<{ success: boolean; user?: User; message?: string }>;
       };
     };
   }
