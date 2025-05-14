@@ -9,6 +9,7 @@ import useTheme from "../hooks/useTheme";
 import Dashboard from "../pages/dashboard";
 import { Automations } from "../pages/automations";
 import { Settings } from "../pages/settings";
+import LoginPage from "../pages/LoginPage";
 
 const root = createRoot(document.body);
 
@@ -20,6 +21,7 @@ const App = () => {
       <main>
         <Navbar />
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/automations" element={<Automations />} />
