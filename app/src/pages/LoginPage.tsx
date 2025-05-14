@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import "./LoginPage.scss"; // We'll create this for styling
 
 const LoginPage: React.FC = () => {
