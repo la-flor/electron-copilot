@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import fs from "fs";
 import path from "path";
+import { User } from "../src/shared/interfaces/database.interface";
 import started from "electron-squirrel-startup";
 import sqlite3 from "better-sqlite3";
 
@@ -57,6 +58,74 @@ ipcMain.handle("database:addUser", (_event, user) => {
     "INSERT INTO user (first_name, last_name, email, password) VALUES (?, ?, ?, ?)"
   );
   stmt.run(user.first_name, user.last_name, user.email, user.password);
+});
+
+ipcMain.handle("database:updateUser", (_event, userPatch: Partial<User>) => {
+  const { id, ...otherFields } = userPatch;
+
+  if (!id) {
+    console.error("Update user call missing 'id'");
+    return { success: false, message: "User ID must be provided for update." };
+  }
+
+  const fieldsToUpdate: Partial<Omit<User, 'id' | 'create_time' | 'update_time'>> = {};
+  // Define keys that are allowed to be updated
+  const allowedKeys: (keyof Omit<User, 'id' | 'create_time' | 'update_time'>)[] = [
+    'first_name', 'last_name', 'email', 'password', 'delete_time', 'dark'
+  ];
+
+  for (const key of allowedKeys) {
+    if (key in otherFields && otherFields[key] !== undefined) {
+      (fieldsToUpdate as any)[key] = otherFields[key];
+    }
+  }
+
+  const validKeys = Object.keys(fieldsToUpdate);
+
+  if (validKeys.length === 0) {
+    // If only 'id' was passed, or other fields were undefined.
+    // We can choose to update `update_time` anyway or return.
+    // For now, let's update `update_time` if the user exists.
+    try {
+      const userExistsStmt = db.prepare("SELECT id FROM user WHERE id = ?");
+      const userExists = userExistsStmt.get(parseInt(id, 10));
+      if (!userExists) {
+        return { success: false, message: `User with id ${id} not found.` };
+      }
+      const stmt = db.prepare("UPDATE user SET update_time = CURRENT_TIMESTAMP WHERE id = ?");
+      stmt.run(parseInt(id, 10));
+      const updatedUserStmt = db.prepare("SELECT * FROM user WHERE id = ?");
+      const updatedUser = updatedUserStmt.get(parseInt(id, 10));
+      return { success: true, user: updatedUser, changes: 0, message: "Only update_time was refreshed as no other fields were provided." };
+    } catch (error: any) {
+      console.error(`Failed to update user (update_time only) with id ${id}:`, error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  const setClauses = validKeys.map(key => `${key} = ?`).join(", ");
+  const values = validKeys.map(key => (fieldsToUpdate as any)[key]);
+
+  const query = `UPDATE user SET ${setClauses}, update_time = CURRENT_TIMESTAMP WHERE id = ?`;
+  values.push(parseInt(id, 10)); // Convert string id to number for SQL
+
+  try {
+    const stmt = db.prepare(query);
+    const info = stmt.run(...values);
+
+    const updatedUserStmt = db.prepare("SELECT * FROM user WHERE id = ?");
+    const updatedUser = updatedUserStmt.get(parseInt(id, 10));
+
+    if (!updatedUser) {
+        // This case should ideally not be reached if id was valid and parseInt succeeded.
+        return { success: false, message: `User with id ${id} not found after update attempt.` };
+    }
+
+    return { success: true, user: updatedUser, changes: info.changes };
+  } catch (error: any) {
+    console.error(`Failed to update user with id ${id}:`, error);
+    return { success: false, message: error.message };
+  }
 });
 
 const createWindow = () => {
