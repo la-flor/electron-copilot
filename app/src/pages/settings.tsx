@@ -15,14 +15,16 @@ export const Settings = () => {
     getUser();
   }, []);
 
-  // TODO: Implement a function to update user settings
-  const handleDarkModeChange = () => {
+  const handleDarkModeChange = async () => {
     if (user) {
-      // This would ideally call an update function:
-      // await window.db.user.updateUser({ ...user, dark: user.dark ? 0 : 1 });
-      // For now, just toggle the state locally or log
-      console.log("Dark mode toggled. Current user state:", user);
-      // setUser({ ...user, dark: user.dark ? 0 : 1 }); // Example local toggle
+      const newDarkValue = user.dark ? 0 : 1;
+      try {
+        await window.db.user.updateUser({ id: user.id, dark: newDarkValue });
+        setUser({ ...user, dark: newDarkValue });
+      } catch (error) {
+        console.error("Failed to update dark mode setting:", error);
+        // Optionally, revert the checkbox state or show an error to the user
+      }
     }
   };
 
