@@ -17,7 +17,7 @@ export const Settings = () => {
 
   useEffect(() => {
     if (user) {
-      document.documentElement.dataset.bsTheme = user.dark ? 'dark' : 'light';
+      document.documentElement.dataset.bsTheme = user.dark ? "dark" : "light";
     }
     // Optional: Cleanup function to reset theme if user logs out or component unmounts
     // return () => {
