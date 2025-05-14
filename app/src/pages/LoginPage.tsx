@@ -1,12 +1,5 @@
-import React from "react";
-
-const LoginPage = () => {
-  return <div>LoginPage</div>;
-};
-
-export default LoginPage;
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import "./LoginPage.scss"; // We'll create this for styling
 
 const LoginPage: React.FC = () => {
@@ -32,7 +25,9 @@ const LoginPage: React.FC = () => {
         // For now, just navigate to dashboard
         navigate("/dashboard");
       } else {
-        setError(result.message || "Login failed. Please check your credentials.");
+        setError(
+          result.message || "Login failed. Please check your credentials."
+        );
       }
     } catch (err) {
       console.error("Login error:", err);
