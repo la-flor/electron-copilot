@@ -22,7 +22,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="navbar navbar-expand-sm bg-body-tertiary">
+    <nav className="navbar navbar-expand-sm bg-body-tertiary py-2">
       <div className="container-fluid">
         <Link className="navbar-brand" to={isAuthenticated ? "/home" : "/"}>
           E-Copilot
@@ -41,7 +41,7 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           {isAuthenticated ? (
             <>
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <ul className="navbar-nav me-auto mb-lg-0">
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${
@@ -97,8 +97,8 @@ const Navbar = () => {
               </ul>
               <ul className="navbar-nav">
                 {user && (
-                  <li className="nav-item">
-                    <span className="navbar-text me-3">
+                  <li className="nav-item d-flex align-items-center">
+                    <span className="navbar-text py-0 me-3">
                       Hi, {user.first_name}
                     </span>
                   </li>
