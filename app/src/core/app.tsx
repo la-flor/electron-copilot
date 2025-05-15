@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import Home from "../pages/home";
 import "./app.scss";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/navbar";
 import useTheme from "../hooks/useTheme";
 import Dashboard from "../pages/dashboard";
 import { Automations } from "../pages/automations";
