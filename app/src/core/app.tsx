@@ -2,13 +2,13 @@ import "../styles/bootstrap-overrides.scss";
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { createRoot } from "react-dom/client";
-import Home from "../pages/home";
+import Home from "../pages/Home";
 import "./app.scss";
-import Navbar from "../components/navbar";
+import Navbar from "../components/Navbar";
 import useTheme from "../hooks/useTheme";
-import Dashboard from "../pages/dashboard";
-import { Automations } from "../pages/automations";
-import { Settings } from "../pages/settings";
+import Dashboard from "../pages/Dashboard";
+import { Automations } from "../pages/Automations";
+import { Settings } from "../pages/Settings";
 import LoginPage from "../pages/LoginPage";
 import { AuthProvider } from "../context/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -36,7 +36,7 @@ const AppWrapper = () => {
       </footer>
     </main>
   );
-}
+};
 
 const App = () => {
   return (

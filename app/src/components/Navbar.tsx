@@ -11,7 +11,8 @@ const Navbar = () => {
   };
 
   if (isLoading) {
-    return ( // Render a minimal navbar or nothing during auth loading
+    return (
+      // Render a minimal navbar or nothing during auth loading
       <nav className="navbar navbar-expand-sm bg-body-tertiary">
         <div className="container-fluid">
           <span className="navbar-brand">E-Copilot</span>
@@ -46,7 +47,9 @@ const Navbar = () => {
                     className={`nav-link ${
                       location.pathname === "/home" ? "active" : ""
                     }`}
-                    aria-current={location.pathname === "/home" ? "page" : undefined}
+                    aria-current={
+                      location.pathname === "/home" ? "page" : undefined
+                    }
                     to="/home"
                   >
                     Chat
@@ -94,11 +97,11 @@ const Navbar = () => {
               </ul>
               <ul className="navbar-nav">
                 {user && (
-                   <li className="nav-item">
-                      <span className="navbar-text me-3">
-                        Hi, {user.first_name}
-                      </span>
-                    </li>
+                  <li className="nav-item">
+                    <span className="navbar-text me-3">
+                      Hi, {user.first_name}
+                    </span>
+                  </li>
                 )}
                 <li className="nav-item">
                   <button
