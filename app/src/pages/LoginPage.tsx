@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import "./LoginPage.scss";
+import "./login-page.scss";
 import { useAuth } from "../context/AuthContext";
-
+    
 const LoginPage: React.FC = () => {
   const { login, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState("john.doe@example.com");
