@@ -52,6 +52,12 @@ export const NewEditAutomation = ({ id, onClose }: NewEditAutomationProps) => {
                 </label>
                 <input type="text" className="form-control" id="cronSchedule" />
               </div>
+              <div className="mb-3">
+                <label htmlFor="fileUpload" className="form-label">
+                  Upload File
+                </label>
+                <input type="file" className="form-control" id="fileUpload" />
+              </div>
             </form>
           </div>
           <div className="modal-footer">
