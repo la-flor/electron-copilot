@@ -74,13 +74,23 @@ const data = [
 ];
 
 export const Automations = () => {
-  const [editAutomationId, setEditAutomationId] = useState(null);
+  const [editAutomationId, setEditAutomationId] = useState<
+    number | "new" | null
+  >(null);
 
   return (
     <div className="container d-flex flex-column gap-3 py-3">
-      {editAutomationId && (
+      <div className="d-flex justify-content-end">
+        <button
+          className="btn btn-primary"
+          onClick={() => setEditAutomationId("new")}
+        >
+          New Automation
+        </button>
+      </div>
+      {editAutomationId !== null && (
         <NewEditAutomation
-          id={editAutomationId}
+          id={typeof editAutomationId === "number" ? editAutomationId : null}
           onClose={() => setEditAutomationId(null)}
         />
       )}
