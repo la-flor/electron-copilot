@@ -24,7 +24,9 @@ export const NewEditAutomation = ({ id, onClose }: NewEditAutomationProps) => {
       <div className="modal-dialog" role="document">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">New/Edit Automation</h5>
+            <h5 className="modal-title">
+              {id ? "Edit Automation" : "New Automation"}
+            </h5>
             <button
               type="button"
               className="btn-close"
