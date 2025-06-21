@@ -90,6 +90,11 @@ export const Automations = () => {
       {editAutomationId !== null && (
         <NewEditAutomation
           id={typeof editAutomationId === "number" ? editAutomationId : null}
+          automationToEdit={
+            typeof editAutomationId === "number"
+              ? automations.find((a) => a.id === editAutomationId)
+              : null
+          }
           onClose={() => setEditAutomationId(null)}
         />
       )}
