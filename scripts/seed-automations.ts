@@ -1,6 +1,6 @@
-import sqlite3 from 'better-sqlite3';
-import fs from 'fs';
-import path from 'path';
+import sqlite3 from "better-sqlite3";
+import fs from "fs";
+import path from "path";
 
 // Data copied from app/src/pages/Automations.tsx and adapted for seeding
 // 'id' and 'fileDownloadLink' fields are removed.
@@ -12,7 +12,7 @@ const sampleAutomationsSeedData = [
     cronNextRun: "2023-10-01T00:00:00Z",
     cronLastRun: "2023-09-30T23:59:59Z",
     cronLastRunStatus: "success" as const,
-    cronLastRunError: null,
+    cronLastRunError: null as any,
     cronLastRunDuration: "1s",
     cronLastRunOutput: "Automation 1 executed successfully",
     name: "Automation 1",
@@ -45,7 +45,7 @@ const sampleAutomationsSeedData = [
     fileLastModified: "2023-09-30T11:59:59Z",
     fileChecksum: "def456",
     fileUploadDate: "2023-09-30T11:59:59Z",
-    triggerEndpoint: null,
+    triggerEndpoint: null as any,
   },
   {
     cronSchedule: "0 18 * * *",
@@ -70,7 +70,7 @@ const sampleAutomationsSeedData = [
   },
 ];
 
-const dbPath = path.resolve(__dirname, '../app/database/dev-database.db');
+const dbPath = path.resolve(__dirname, "../app/database/dev-database.db");
 
 function initializeDatabase(): sqlite3.Database {
   const dbDir = path.dirname(dbPath);
@@ -147,7 +147,10 @@ function seedData(db: sqlite3.Database) {
       insertStmt.run(automationData);
       insertedCount++;
     } catch (error) {
-      console.error(`Failed to insert automation "${automationData.name}":`, error);
+      console.error(
+        `Failed to insert automation "${automationData.name}":`,
+        error
+      );
     }
   }
   if (insertedCount > 0) {
@@ -162,11 +165,11 @@ function seedData(db: sqlite3.Database) {
 }
 
 function main() {
-  console.log('Starting automation data seeding script...');
+  console.log("Starting automation data seeding script...");
   const db = initializeDatabase();
   seedData(db);
   db.close();
-  console.log('Database connection closed. Seeding complete.');
+  console.log("Database connection closed. Seeding complete.");
 }
 
 main();
