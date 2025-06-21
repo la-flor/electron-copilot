@@ -37,6 +37,27 @@ export const Automations = () => {
     }
   }, [editAutomationId]);
 
+  const handleDeleteAutomation = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this automation?")) {
+      try {
+        const result = await window.db.automation.deleteAutomation(id);
+        if (result.success) {
+          console.log("Automation deleted:", id);
+          fetchAutomationsData(); // Refresh the list
+        } else {
+          console.error("Failed to delete automation:", result.message);
+          // Optionally, show an error message to the user
+          setError(result.message || "Failed to delete automation.");
+        }
+      } catch (err) {
+        console.error("Error deleting automation:", err);
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred while deleting."
+        );
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container py-3">
@@ -206,7 +227,12 @@ export const Automations = () => {
               >
                 Edit
               </button>
-              <button className="btn btn-danger">Delete</button>
+              <button
+                className="btn btn-danger"
+                onClick={() => handleDeleteAutomation(automation.id)}
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
