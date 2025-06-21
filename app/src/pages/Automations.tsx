@@ -115,29 +115,39 @@ export const Automations = () => {
             <details open>
               <summary>View Details</summary>
               <div className="ps-4 py-2">
-                <p className="card-text">
-                  <strong>File Name:</strong>{" "}
-                  <a href={automation.fileDownloadLink} target="_blank">
-                    {automation.fileName} <small>({automation.fileSize})</small>
-                  </a>
-                </p>
-                <p className="card-text">
-                  <strong>File Type:</strong> {automation.fileType}
-                </p>
-                <p className="card-text">
-                  <strong>Last Modified:</strong>{" "}
-                  {new Date(automation.fileLastModified).toLocaleString()}
-                </p>
-                <p className="card-text">
-                  <strong>Checksum:</strong> {automation.fileChecksum}
-                </p>
-                <p className="card-text">
-                  <strong>Upload Date:</strong>{" "}
-                  {new Date(automation.fileUploadDate).toLocaleString()}
-                </p>
+                {automation.fileName && (
+                  <p className="card-text">
+                    <strong>File Name:</strong> {automation.fileName}{" "}
+                    {automation.fileSize && <small>({automation.fileSize})</small>}
+                  </p>
+                )}
+                {automation.fileType && (
+                  <p className="card-text">
+                    <strong>File Type:</strong> {automation.fileType}
+                  </p>
+                )}
+                {automation.fileLastModified && (
+                  <p className="card-text">
+                    <strong>Last Modified:</strong>{" "}
+                    {new Date(automation.fileLastModified).toLocaleString()}
+                  </p>
+                )}
+                {automation.fileChecksum && (
+                  <p className="card-text">
+                    <strong>Checksum:</strong> {automation.fileChecksum}
+                  </p>
+                )}
+                {automation.fileUploadDate && (
+                  <p className="card-text">
+                    <strong>Upload Date:</strong>{" "}
+                    {new Date(automation.fileUploadDate).toLocaleString()}
+                  </p>
+                )}
                 <p className="card-text">
                   <strong>Next Run:</strong>{" "}
-                  {new Date(automation.cronNextRun).toLocaleString()}
+                  {automation.cronNextRun
+                    ? new Date(automation.cronNextRun).toLocaleString()
+                    : "N/A"}
                 </p>
                 <p className="card-text">
                   <strong>Last Run:</strong>
@@ -145,30 +155,36 @@ export const Automations = () => {
 
                 <div className="container">
                   <p className="card-text">
-                    {new Date(automation.cronLastRun).toLocaleString()}
+                    {automation.cronLastRun
+                      ? new Date(automation.cronLastRun).toLocaleString()
+                      : "N/A"}
                   </p>
-                  <div className="progress mb-3">
-                    <div
-                      className={`progress-bar ${
-                        automation.cronLastRunStatus === "success"
-                          ? "bg-primary"
-                          : "bg-danger"
-                      }`}
-                      role="progressbar"
-                      style={{
-                        width: `${Math.min(
-                          (parseFloat(automation.cronLastRunDuration) / 10) *
-                            100,
-                          100
-                        )}%`,
-                      }}
-                      aria-valuenow={parseFloat(automation.cronLastRunDuration)}
-                      aria-valuemin={0}
-                      aria-valuemax={10}
-                    >
-                      {automation.cronLastRunDuration}
+                  {automation.cronLastRunDuration && automation.cronLastRunStatus !== 'pending' && (
+                    <div className="progress mb-3">
+                      <div
+                        className={`progress-bar ${
+                          automation.cronLastRunStatus === "success"
+                            ? "bg-primary"
+                            : automation.cronLastRunStatus === "failure"
+                              ? "bg-danger"
+                              : "bg-secondary" // for 'running' or other states
+                        }`}
+                        role="progressbar"
+                        style={{
+                          width: `${Math.min(
+                            (parseFloat(automation.cronLastRunDuration) / 10) * // Assuming max duration of 10 units for 100%
+                              100,
+                            100
+                          )}%`,
+                        }}
+                        aria-valuenow={parseFloat(automation.cronLastRunDuration)}
+                        aria-valuemin={0}
+                        aria-valuemax={10} 
+                      >
+                        {automation.cronLastRunDuration}
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {automation.cronLastRunError && (
                     <p className="card-text">
                       <strong className="text-capitalize">
