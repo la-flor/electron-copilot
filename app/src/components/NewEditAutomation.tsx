@@ -1,7 +1,10 @@
-import React, { FormEvent, useState } from "react";
-import { Automation } from "../../shared/interfaces/database.interface";
+import { FormEvent, useState } from "react";
+import { Automation } from "../shared/interfaces/database.interface";
 
-type AutomationCreationData = Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">;
+type AutomationCreationData = Omit<
+  Automation,
+  "id" | "create_time" | "update_time" | "delete_time"
+>;
 
 interface NewEditAutomationProps {
   id: number | null;
@@ -22,7 +25,8 @@ export const NewEditAutomation = ({ id, onClose }: NewEditAutomationProps) => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (id === null) { // Only handle new automation creation
+    if (id === null) {
+      // Only handle new automation creation
       const newAutomationData: AutomationCreationData = {
         name,
         description,
@@ -33,7 +37,7 @@ export const NewEditAutomation = ({ id, onClose }: NewEditAutomationProps) => {
         cronLastRun: "", // Will be set by scheduler or backend logic
         cronLastRunStatus: "pending", // Initial status
         cronLastRunError: null,
-        cronLastRunDuration: "", 
+        cronLastRunDuration: "",
         cronLastRunOutput: "",
         status: "Inactive", // Default status
         fileName: null, // Will be set if file is uploaded
@@ -46,7 +50,9 @@ export const NewEditAutomation = ({ id, onClose }: NewEditAutomationProps) => {
       };
 
       try {
-        const result = await window.db.automation.addAutomation(newAutomationData);
+        const result = await window.db.automation.addAutomation(
+          newAutomationData
+        );
         if (result.success) {
           console.log("New automation added:", result.automation);
           handleClose();
