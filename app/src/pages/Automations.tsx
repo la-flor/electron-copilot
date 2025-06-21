@@ -1,82 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NewEditAutomation } from "../components/NewEditAutomation";
-
-const data = [
-  {
-    id: 1,
-    cronSchedule: "0 0 * * *",
-    cronTimezone: "UTC",
-    cronDescription: "Every day at midnight",
-    cronNextRun: "2023-10-01T00:00:00Z",
-    cronLastRun: "2023-09-30T23:59:59Z",
-    cronLastRunStatus: "success",
-    cronLastRunError: null,
-    cronLastRunDuration: "1s",
-    cronLastRunOutput: "Automation 1 executed successfully",
-    name: "Automation 1",
-    description: "Check weather forcast and report key interests",
-    status: "Active",
-    fileName: "automation1.py",
-    fileSize: "2MB",
-    fileType: "Python Script",
-    fileLastModified: "2023-09-30T23:59:59Z",
-    fileChecksum: "abc123",
-    fileDownloadLink: "http://example.com/download/automation1.py",
-    fileUploadDate: "2023-09-30T23:59:59Z",
-    triggerEndpoint: "http://example.com/automation/1",
-  },
-  {
-    id: 2,
-    cronSchedule: "0 12 * * *",
-    cronTimezone: "UTC",
-    cronDescription: "Every day at noon",
-    cronNextRun: "2023-10-01T12:00:00Z",
-    cronLastRun: "2023-09-30T11:59:59Z",
-    cronLastRunStatus: "failure",
-    cronLastRunError: "Error executing automation 2",
-    cronLastRunDuration: "2s",
-    cronLastRunOutput: "Automation 2 failed",
-    name: "Automation 2",
-    description: "Check latest tech releases and summarize",
-    status: "Inactive",
-    fileName: "automation2.py",
-    fileSize: "3MB",
-    fileType: "Python Script",
-    fileLastModified: "2023-09-30T11:59:59Z",
-    fileChecksum: "def456",
-    fileDownloadLink: "http://example.com/download/automation2.py",
-    fileUploadDate: "2023-09-30T11:59:59Z",
-    triggerEndpoint: null,
-  },
-  {
-    id: 3,
-    cronSchedule: "0 18 * * *",
-    cronTimezone: "UTC",
-    cronDescription: "Every day at 6 PM",
-    cronNextRun: "2023-10-01T18:00:00Z",
-    cronLastRun: "2023-09-30T17:59:59Z",
-    cronLastRunStatus: "success",
-    cronLastRunError: null,
-    cronLastRunDuration: "3s",
-    cronLastRunOutput: "Automation 3 executed successfully",
-    name: "Automation 3",
-    description: "Report top todos on my list",
-    status: "Active",
-    fileName: "automation3.py",
-    fileSize: "4MB",
-    fileType: "Python Script",
-    fileLastModified: "2023-09-30T17:59:59Z",
-    fileChecksum: "ghi789",
-    fileDownloadLink: "http://example.com/download/automation3.py",
-    fileUploadDate: "2023-09-30T17:59:59Z",
-    triggerEndpoint: "http://example.com/automation/3",
-  },
-];
+import { Automation } from "../shared/interfaces/database.interface";
 
 export const Automations = () => {
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editAutomationId, setEditAutomationId] = useState<
     number | "new" | null
   >(null);
+
+  const fetchAutomationsData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await window.db.automation.fetchAutomations();
+      setAutomations(data);
+    } catch (err) {
+      console.error("Failed to fetch automations:", err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAutomationsData();
+  }, []); // Initial fetch
+
+  useEffect(() => {
+    // Refetch when the modal is closed (editAutomationId becomes null after an add/edit)
+    if (editAutomationId === null) {
+      fetchAutomationsData();
+    }
+  }, [editAutomationId]);
+
+  if (isLoading) {
+    return (
+      <div className="container py-3">
+        <p>Loading automations...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-3">
+        <p className="text-danger">Error loading automations: {error}</p>
+        <button className="btn btn-primary" onClick={fetchAutomationsData}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="container d-flex flex-column gap-3 py-3">
@@ -94,7 +72,12 @@ export const Automations = () => {
           onClose={() => setEditAutomationId(null)}
         />
       )}
-      {data.map((automation) => (
+      {automations.length === 0 && !isLoading && (
+        <div className="alert alert-info" role="alert">
+          No automations found. Click "New Automation" to add one.
+        </div>
+      )}
+      {automations.map((automation) => (
         <div className="card" key={automation.id}>
           <div className="card-body">
             <div className="d-flex justify-content-between align-items-center">
