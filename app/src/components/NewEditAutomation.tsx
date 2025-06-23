@@ -1,11 +1,3 @@
-import { FormEvent, useState } from "react";
-import { Automation } from "../shared/interfaces/database.interface";
-
-type AutomationCreationData = Omit<
-  Automation,
-  "id" | "create_time" | "update_time" | "delete_time"
->;
-
 import { FormEvent, useState, useEffect } from "react";
 import { Automation } from "../shared/interfaces/database.interface";
 
@@ -14,8 +6,10 @@ type AutomationCreationData = Omit<
   "id" | "create_time" | "update_time" | "delete_time"
 >;
 
-type AutomationUpdateData = Partial<Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">> & Pick<Automation, "id">;
-
+type AutomationUpdateData = Partial<
+  Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">
+> &
+  Pick<Automation, "id">;
 
 interface NewEditAutomationProps {
   id: number | null;
@@ -23,7 +17,11 @@ interface NewEditAutomationProps {
   onClose: () => void;
 }
 
-export const NewEditAutomation = ({ id, automationToEdit, onClose }: NewEditAutomationProps) => {
+export const NewEditAutomation = ({
+  id,
+  automationToEdit,
+  onClose,
+}: NewEditAutomationProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [cronSchedule, setCronSchedule] = useState("");
@@ -99,11 +97,13 @@ export const NewEditAutomation = ({ id, automationToEdit, onClose }: NewEditAuto
         cronSchedule,
         // TODO: Include other fields that are editable
         // For example, if status was editable:
-        // status: currentStatusState, 
+        // status: currentStatusState,
       };
 
       try {
-        const result = await window.db.automation.updateAutomation(updatedAutomationData);
+        const result = await window.db.automation.updateAutomation(
+          updatedAutomationData
+        );
         if (result.success) {
           console.log("Automation updated:", result.automation);
           handleClose();
