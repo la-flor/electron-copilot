@@ -2,6 +2,16 @@ import { useState, useEffect } from "react";
 import { NewEditAutomation } from "../components/NewEditAutomation";
 import { Automation } from "../shared/interfaces/database.interface";
 
+// Helper function to format bytes into a human-readable string
+const formatBytes = (bytes: number | null, decimals = 2) => {
+  if (bytes === null || bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+};
+
 export const Automations = () => {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +154,7 @@ export const Automations = () => {
                 {automation.fileName && (
                   <p className="card-text">
                     <strong>File Name:</strong> {automation.fileName}{" "}
-                    {automation.fileSize && <small>({automation.fileSize})</small>}
+                    {automation.fileSize !== null && <small>({formatBytes(automation.fileSize)})</small>}
                   </p>
                 )}
                 {automation.fileType && (
