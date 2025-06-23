@@ -19,6 +19,13 @@ export const Automations = () => {
   const [editAutomationId, setEditAutomationId] = useState<
     number | "new" | null
   >(null);
+  const [testExecutionResult, setTestExecutionResult] = useState<{
+    automationId: number | null;
+    output?: string;
+    error?: string;
+    message?: string;
+    isLoading: boolean;
+  }>({ automationId: null, isLoading: false });
 
   const fetchAutomationsData = async () => {
     setIsLoading(true);
@@ -65,6 +72,35 @@ export const Automations = () => {
           err instanceof Error ? err.message : "An unknown error occurred while deleting."
         );
       }
+    }
+  };
+
+  const handleTestExecute = async (automationId: number) => {
+    setTestExecutionResult({ automationId, isLoading: true });
+    try {
+      const result = await window.db.automation.testExecuteAutomation(automationId);
+      if (result.success) {
+        setTestExecutionResult({
+          automationId,
+          output: result.output,
+          error: result.error,
+          isLoading: false,
+        });
+      } else {
+        setTestExecutionResult({
+          automationId,
+          error: result.error || result.message || "Test execution failed.",
+          output: result.output,
+          isLoading: false,
+        });
+      }
+    } catch (err) {
+      console.error("Error testing automation:", err);
+      setTestExecutionResult({
+        automationId,
+        error: err instanceof Error ? err.message : "An unknown error occurred during test execution.",
+        isLoading: false,
+      });
     }
   };
 
@@ -248,7 +284,38 @@ export const Automations = () => {
               >
                 Delete
               </button>
+              {automation.fileName && (
+                <button
+                  className="btn btn-info"
+                  onClick={() => handleTestExecute(automation.id)}
+                  disabled={testExecutionResult.isLoading && testExecutionResult.automationId === automation.id}
+                >
+                  {testExecutionResult.isLoading && testExecutionResult.automationId === automation.id ? "Testing..." : "Test Execute"}
+                </button>
+              )}
             </div>
+            {testExecutionResult.automationId === automation.id && !testExecutionResult.isLoading && (
+              <div className="mt-2">
+                <h6>Test Execution Result:</h6>
+                {testExecutionResult.output && (
+                  <pre className="alert alert-secondary">
+                    <strong>Output:</strong>
+                    <br />
+                    {testExecutionResult.output}
+                  </pre>
+                )}
+                {testExecutionResult.error && (
+                  <pre className="alert alert-danger">
+                    <strong>Error:</strong>
+                    <br />
+                    {testExecutionResult.error}
+                  </pre>
+                )}
+                {testExecutionResult.message && !testExecutionResult.output && !testExecutionResult.error && (
+                  <p className="alert alert-warning">{testExecutionResult.message}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}

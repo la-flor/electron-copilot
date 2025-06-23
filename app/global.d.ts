@@ -26,6 +26,9 @@ declare global {
         deleteAutomation: (
           id: number
         ) => Promise<{ success: boolean; id?: number; message?: string }>;
+        testExecuteAutomation: (
+          id: number
+        ) => Promise<{ success: boolean; output?: string; error?: string; message?: string }>;
       };
     };
   }

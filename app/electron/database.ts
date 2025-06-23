@@ -2,6 +2,7 @@ import { IpcMain, App } from "electron";
 import fs from "fs";
 import path from "path";
 import sqlite3 from "better-sqlite3";
+import { execFile } from "child_process";
 import { User, Automation } from "../src/shared/interfaces/database.interface";
 
 let db: sqlite3.Database;
@@ -361,4 +362,61 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
       message: `Automation with id ${id} not found or already deleted.`,
     };
   });
+
+  ipcMain.handle(
+    "database:testExecuteAutomation",
+    async (_event, id: number) => {
+      const automation = db
+        .prepare("SELECT * FROM automation WHERE id = ? AND delete_time IS NULL")
+        .get(id) as Automation | undefined;
+
+      if (!automation) {
+        return {
+          success: false,
+          message: `Automation with id ${id} not found.`,
+        };
+      }
+
+      if (!automation.fileName) {
+        return {
+          success: false,
+          message: `Automation with id ${id} does not have an associated file.`,
+        };
+      }
+
+      // Assumption: Scripts are stored in 'automation_scripts' in userData
+      const scriptsDir = path.join(app.getPath("userData"), "automation_scripts");
+      const scriptPath = path.join(scriptsDir, automation.fileName);
+
+      if (!fs.existsSync(scriptPath)) {
+        return {
+          success: false,
+          message: `Script file not found: ${scriptPath}`,
+        };
+      }
+
+      // Assumption: Execute .py files with python3
+      if (automation.fileName.endsWith(".py")) {
+        return new Promise((resolve) => {
+          execFile("python3", [scriptPath], (error, stdout, stderr) => {
+            if (error) {
+              resolve({
+                success: false,
+                error: stderr || error.message,
+                output: stdout,
+                message: "Script execution failed.",
+              });
+            } else {
+              resolve({ success: true, output: stdout, error: stderr });
+            }
+          });
+        });
+      } else {
+        return {
+          success: false,
+          message: `File type not supported for execution: ${automation.fileName}. Only .py files are currently supported.`,
+        };
+      }
+    }
+  );
 };
