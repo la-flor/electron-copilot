@@ -1,15 +1,17 @@
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, ChangeEvent } from "react";
 import { Automation } from "../shared/interfaces/database.interface";
 
-type AutomationCreationData = Omit<
+// filePath is a transient property used to pass the original file path to the main process
+// It won't be stored in the database directly as 'filePath'.
+type AutomationCreationPayload = Omit<
   Automation,
   "id" | "create_time" | "update_time" | "delete_time"
->;
+> & { filePath?: string };
 
-type AutomationUpdateData = Partial<
-  Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">
+type AutomationUpdatePayload = Partial<
+  Omit<Automation, "create_time" | "update_time" | "delete_time">
 > &
-  Pick<Automation, "id">;
+  Pick<Automation, "id"> & { filePath?: string };
 
 interface NewEditAutomationProps {
   id: number | null;
@@ -25,7 +27,8 @@ export const NewEditAutomation = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [cronSchedule, setCronSchedule] = useState("");
-  // TODO: Add state and handling for other editable fields like status, timezone, file upload etc.
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // TODO: Add state and handling for other editable fields like status, timezone, etc.
 
   useEffect(() => {
     if (automationToEdit && id !== null) {
@@ -38,8 +41,22 @@ export const NewEditAutomation = ({
       setName("");
       setDescription("");
       setCronSchedule("");
+      setSelectedFile(null);
+      // Reset file input visually
+      const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
     }
   }, [id, automationToEdit]);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
 
   const handleClose = () => {
     if (onClose) {
@@ -49,34 +66,39 @@ export const NewEditAutomation = ({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // The 'path' property is specific to Electron's File object
+    const filePath = selectedFile ? (selectedFile as any).path : undefined;
+
     if (id === null) {
-      // Only handle new automation creation
-      const newAutomationData: AutomationCreationData = {
+      // Create new automation
+      const newAutomationData: AutomationCreationPayload = {
         name,
         description,
         cronSchedule,
-        cronTimezone: "UTC", // Default value
+        cronTimezone: "UTC",
         cronDescription: "", // Default or derive if necessary
         cronNextRun: "", // Will be set by scheduler or backend logic
         cronLastRun: "", // Will be set by scheduler or backend logic
-        cronLastRunStatus: "pending", // Initial status
+        cronLastRunStatus: "pending",
         cronLastRunError: null,
         cronLastRunDuration: "",
         cronLastRunOutput: "",
-        status: "Inactive", // Default status
-        fileName: null, // Will be set if file is uploaded
-        fileSize: null,
-        fileType: null,
-        fileLastModified: null,
-        fileChecksum: null,
-        fileUploadDate: null,
-        triggerEndpoint: null, // Set if applicable
+        status: "Inactive",
+        triggerEndpoint: null,
+        // File related fields
+        fileName: selectedFile ? selectedFile.name : null,
+        fileSize: selectedFile ? selectedFile.size : null,
+        fileType: selectedFile ? selectedFile.type : null,
+        fileLastModified: selectedFile
+          ? new Date(selectedFile.lastModified).toISOString()
+          : null,
+        fileChecksum: null, // Backend will calculate this
+        fileUploadDate: null, // Backend will set this
+        filePath,
       };
 
       try {
-        const result = await window.db.automation.addAutomation(
-          newAutomationData
-        );
+        const result = await window.db.automation.addAutomation(newAutomationData);
         if (result.success) {
           console.log("New automation added:", result.automation);
           handleClose();
@@ -89,21 +111,32 @@ export const NewEditAutomation = ({
         // TODO: Show error message to user
       }
     } else if (id !== null) {
-      // Handle edit automation logic
-      const updatedAutomationData: AutomationUpdateData = {
+      // Update existing automation
+      const updatedAutomationData: AutomationUpdatePayload = {
         id,
         name,
         description,
         cronSchedule,
-        // TODO: Include other fields that are editable
-        // For example, if status was editable:
-        // status: currentStatusState,
+        // TODO: Include other fields that are editable (e.g. status)
       };
 
+      if (selectedFile) {
+        updatedAutomationData.fileName = selectedFile.name;
+        updatedAutomationData.fileSize = selectedFile.size;
+        updatedAutomationData.fileType = selectedFile.type;
+        updatedAutomationData.fileLastModified = new Date(
+          selectedFile.lastModified
+        ).toISOString();
+        updatedAutomationData.filePath = filePath;
+        // Signal backend to re-calculate checksum and update upload date for the new file
+        updatedAutomationData.fileChecksum = null;
+        updatedAutomationData.fileUploadDate = null;
+      }
+      // If no new file is selected, existing file information on the backend
+      // should be preserved (by not sending these fields).
+
       try {
-        const result = await window.db.automation.updateAutomation(
-          updatedAutomationData
-        );
+        const result = await window.db.automation.updateAutomation(updatedAutomationData);
         if (result.success) {
           console.log("Automation updated:", result.automation);
           handleClose();
@@ -175,9 +208,14 @@ export const NewEditAutomation = ({
               </div>
               <div className="mb-3">
                 <label htmlFor="fileUpload" className="form-label">
-                  Upload File
+                  Upload File {selectedFile && `(${selectedFile.name})`}
                 </label>
-                <input type="file" className="form-control" id="fileUpload" />
+                <input
+                  type="file"
+                  className="form-control"
+                  id="fileUpload"
+                  onChange={handleFileChange}
+                />
               </div>
             </form>
           </div>
