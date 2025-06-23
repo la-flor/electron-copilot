@@ -210,11 +210,32 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
     "database:addAutomation",
     (
       _event,
-      automation: Omit<
+      automationPayload: Omit<
         Automation,
         "id" | "create_time" | "update_time" | "delete_time"
-      >
+      > & { filePath?: string }
     ) => {
+      const { filePath, ...automationData } = automationPayload;
+
+      if (filePath && automationData.fileName) {
+        try {
+          const scriptsDir = path.join(app.getPath("userData"), "automation_scripts");
+          if (!fs.existsSync(scriptsDir)) {
+            fs.mkdirSync(scriptsDir, { recursive: true });
+            console.log(`Created automation scripts directory: ${scriptsDir}`);
+          }
+          const destPath = path.join(scriptsDir, automationData.fileName);
+          fs.copyFileSync(filePath, destPath);
+          console.log(`Copied script file from ${filePath} to ${destPath}`);
+          // TODO: Consider calculating and storing fileChecksum here
+          // automationData.fileChecksum = calculateChecksum(destPath);
+          // automationData.fileUploadDate = new Date().toISOString();
+        } catch (copyError) {
+          console.error("Failed to copy automation script file:", copyError);
+          return { success: false, message: `Failed to save script file: ${copyError.message}` };
+        }
+      }
+
       const stmt = db.prepare(
         `INSERT INTO automation (
         name, description, cronSchedule, cronTimezone, cronDescription, status, 
@@ -235,8 +256,8 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 
   ipcMain.handle(
     "database:updateAutomation",
-    (_event, automationPatch: Partial<Automation> & Pick<Automation, "id">) => {
-      const { id, ...otherFields } = automationPatch;
+    (_event, automationPatchPayload: Partial<Automation> & Pick<Automation, "id"> & { filePath?: string }) => {
+      const { id, filePath, ...otherFields } = automationPatchPayload;
 
       if (!id) {
         console.error("Update automation call missing 'id'");
@@ -288,10 +309,32 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
         (fieldsToUpdate as any)["delete_time"] = otherFields.delete_time;
       }
 
+      // File copy logic for updates
+      if (filePath && otherFields.fileName) {
+        try {
+          const scriptsDir = path.join(app.getPath("userData"), "automation_scripts");
+          if (!fs.existsSync(scriptsDir)) {
+            fs.mkdirSync(scriptsDir, { recursive: true });
+            console.log(`Created automation scripts directory: ${scriptsDir}`);
+          }
+          const destPath = path.join(scriptsDir, otherFields.fileName);
+          // Consider deleting the old file if the fileName has changed.
+          // For now, this will overwrite if same name, or add new if different name.
+          fs.copyFileSync(filePath, destPath);
+          console.log(`Copied updated script file from ${filePath} to ${destPath}`);
+          // Ensure file related fields in 'otherFields' are up-to-date for the DB
+          // (e.g., fileChecksum might need recalculation, fileUploadDate update)
+          // The frontend already sets fileSize, fileType, fileLastModified from the new file.
+        } catch (copyError) {
+          console.error("Failed to copy updated automation script file:", copyError);
+          return { success: false, message: `Failed to save updated script file: ${copyError.message}` };
+        }
+      }
+
       const validKeys = Object.keys(fieldsToUpdate);
 
-      if (validKeys.length === 0) {
-        // If only ID is provided, perhaps just touch update_time or return current state
+      if (validKeys.length === 0 && !filePath) { // Also check filePath to ensure we don't skip if only file changed
+        // If only ID is provided (and no new file), perhaps just touch update_time or return current state
         const currentAutomation = db
           .prepare("SELECT * FROM automation WHERE id = ?")
           .get(id);
