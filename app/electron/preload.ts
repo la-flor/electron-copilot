@@ -34,5 +34,9 @@ contextBridge.exposeInMainWorld("db", {
       id: number
     ): Promise<{ success: boolean; id?: number; message?: string }> =>
       ipcRenderer.invoke("database:deleteAutomation", id),
+    testExecuteAutomation: (
+      id: number
+    ): Promise<{ success: boolean; output?: string; error?: string; message?: string }> =>
+      ipcRenderer.invoke("database:testExecuteAutomation", id),
   }
 });
