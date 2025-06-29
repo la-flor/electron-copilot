@@ -1,36 +1,15 @@
-import { useEffect, useState } from "react";
-import { User } from "../shared/interfaces/database.interface";
-
-const TEST_USER_ID = 1;
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export const Settings = () => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const fetchedUser: User = await window.db.user.fetchUser(TEST_USER_ID);
-      setUser(fetchedUser);
-    };
-
-    getUser();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      document.documentElement.dataset.bsTheme = user.dark ? "dark" : "light";
-    }
-    // Optional: Cleanup function to reset theme if user logs out or component unmounts
-    // return () => {
-    //   document.documentElement.removeAttribute('data-bs-theme'); // Or set to a default theme
-    // };
-  }, [user]); // This effect runs when the `user` state changes
+  const { user, login } = useContext(AuthContext);
 
   const handleDarkModeChange = async () => {
     if (user) {
       const newDarkValue = user.dark ? 0 : 1;
       try {
         await window.db.user.updateUser({ id: user.id, dark: newDarkValue });
-        setUser({ ...user, dark: newDarkValue });
+        login({ ...user, dark: newDarkValue });
       } catch (error) {
         console.error("Failed to update dark mode setting:", error);
         // Optionally, revert the checkbox state or show an error to the user

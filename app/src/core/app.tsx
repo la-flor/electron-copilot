@@ -1,5 +1,6 @@
 import "../styles/bootstrap-overrides.scss";
 
+import { useContext } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import Home from "../pages/Home";
@@ -10,14 +11,15 @@ import Dashboard from "../pages/Dashboard";
 import { Automations } from "../pages/Automations";
 import { Settings } from "../pages/Settings";
 import LoginPage from "../pages/LoginPage";
-import { AuthProvider } from "../context/AuthContext";
+import { AuthProvider, AuthContext } from "../context/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const root = createRoot(document.body);
 
 // AppWrapper to ensure AuthProvider is within BrowserRouter
 const AppWrapper = () => {
-  useTheme();
+  const { user } = useContext(AuthContext);
+  useTheme(user);
   return (
     <main>
       <Navbar />

@@ -1,28 +1,42 @@
 import { useEffect } from "react";
+import { User } from "../shared/interfaces/database.interface";
 
-const useTheme = () => {
+const useTheme = (user: User | null) => {
   useEffect(() => {
-    const htmlElement = document.querySelector("html");
-    if (!htmlElement) return;
+    const htmlElement = document.documentElement;
 
-    const getDarkModePreference = () => {
-      htmlElement.setAttribute(
-        "data-bs-theme",
-        window.matchMedia("(prefers-color-scheme: dark)").matches
+    const applyTheme = () => {
+      if (user) {
+        // If user is logged in, use their preference
+        htmlElement.dataset.bsTheme = user.dark ? "dark" : "light";
+      } else {
+        // Otherwise, use OS preference
+        const osTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
           ? "dark"
-          : "light"
-      );
+          : "light";
+        htmlElement.dataset.bsTheme = osTheme;
+      }
     };
 
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", getDarkModePreference);
+    // Apply theme on mount and when user changes
+    applyTheme();
 
-    return () =>
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .removeEventListener("change", getDarkModePreference);
-  }, []);
+    // Listen for OS theme changes to apply them when no user is logged in
+    const handleOsThemeChange = (e: MediaQueryListEvent) => {
+      if (!user) {
+        htmlElement.dataset.bsTheme = e.matches ? "dark" : "light";
+      }
+    };
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", handleOsThemeChange);
+
+    // Cleanup listener on component unmount
+    return () => {
+      mediaQuery.removeEventListener("change", handleOsThemeChange);
+    };
+  }, [user]); // Rerun effect if user object changes
 };
 
 export default useTheme;
