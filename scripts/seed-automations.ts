@@ -1,25 +1,29 @@
+import { Automation } from "app/src/shared/interfaces/database.interface";
 import sqlite3 from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 
 // Data copied from app/src/pages/Automations.tsx and adapted for seeding
 // 'id' and 'fileDownloadLink' fields are removed.
-const sampleAutomationsSeedData = [
+const sampleAutomationsSeedData: Omit<
+  Automation,
+  "id" | "create_time" | "update_time" | "delete_time"
+>[] = [
   {
     cronSchedule: "0 0 * * *",
     cronTimezone: "UTC",
     cronDescription: "Every day at midnight",
     cronNextRun: "2023-10-01T00:00:00Z",
     cronLastRun: "2023-09-30T23:59:59Z",
-    cronLastRunStatus: "success" as const,
-    cronLastRunError: null as any,
+    cronLastRunStatus: "success",
+    cronLastRunError: null,
     cronLastRunDuration: "1s",
     cronLastRunOutput: "Automation 1 executed successfully",
     name: "Automation 1",
     description: "Check weather forcast and report key interests",
-    status: "Active" as const,
+    status: "Active",
     fileName: "automation1.py",
-    fileSize: "2MB",
+    fileSize: 2,
     fileType: "Python Script",
     fileLastModified: "2023-09-30T23:59:59Z",
     fileChecksum: "abc123",
@@ -32,20 +36,20 @@ const sampleAutomationsSeedData = [
     cronDescription: "Every day at noon",
     cronNextRun: "2023-10-01T12:00:00Z",
     cronLastRun: "2023-09-30T11:59:59Z",
-    cronLastRunStatus: "failure" as const,
+    cronLastRunStatus: "failure",
     cronLastRunError: "Error executing automation 2",
     cronLastRunDuration: "2s",
     cronLastRunOutput: "Automation 2 failed",
     name: "Automation 2",
     description: "Check latest tech releases and summarize",
-    status: "Inactive" as const,
+    status: "Inactive",
     fileName: "automation2.py",
-    fileSize: "3MB",
+    fileSize: 3,
     fileType: "Python Script",
     fileLastModified: "2023-09-30T11:59:59Z",
     fileChecksum: "def456",
     fileUploadDate: "2023-09-30T11:59:59Z",
-    triggerEndpoint: null as any,
+    triggerEndpoint: null,
   },
   {
     cronSchedule: "0 18 * * *",
@@ -53,15 +57,15 @@ const sampleAutomationsSeedData = [
     cronDescription: "Every day at 6 PM",
     cronNextRun: "2023-10-01T18:00:00Z",
     cronLastRun: "2023-09-30T17:59:59Z",
-    cronLastRunStatus: "success" as const,
+    cronLastRunStatus: "success",
     cronLastRunError: null,
     cronLastRunDuration: "3s",
     cronLastRunOutput: "Automation 3 executed successfully",
     name: "Automation 3",
     description: "Report top todos on my list",
-    status: "Active" as const,
+    status: "Active",
     fileName: "automation3.py",
-    fileSize: "4MB",
+    fileSize: 4,
     fileType: "Python Script",
     fileLastModified: "2023-09-30T17:59:59Z",
     fileChecksum: "ghi789",
@@ -100,7 +104,7 @@ function initializeDatabase(): sqlite3.Database {
         cronLastRunOutput TEXT,
         status TEXT DEFAULT 'Inactive' NOT NULL, -- Active, Inactive
         fileName TEXT,
-        fileSize TEXT,
+        fileSize NUMBER,
         fileType TEXT,
         fileLastModified TEXT,
         fileChecksum TEXT,

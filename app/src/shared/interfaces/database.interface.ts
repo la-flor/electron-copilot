@@ -25,7 +25,7 @@ export interface Automation {
   cronLastRunOutput: string;
   status: "Active" | "Inactive";
   fileName: string | null;
-  fileSize: string | null; // e.g., "2MB"
+  fileSize: number | null; // in bytes
   fileType: string | null;
   fileLastModified: string | null; // ISO date string
   fileChecksum: string | null;

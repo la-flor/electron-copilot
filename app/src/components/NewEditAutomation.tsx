@@ -43,7 +43,9 @@ export const NewEditAutomation = ({
       setCronSchedule("");
       setSelectedFile(null);
       // Reset file input visually
-      const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+      const fileInput = document.getElementById(
+        "fileUpload"
+      ) as HTMLInputElement;
       if (fileInput) {
         fileInput.value = "";
       }
@@ -67,7 +69,7 @@ export const NewEditAutomation = ({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     // The 'path' property is specific to Electron's File object
-    const filePath = selectedFile ? (selectedFile as any).path : undefined;
+    const filePath = selectedFile ? selectedFile.path : undefined;
 
     if (id === null) {
       // Create new automation
@@ -98,7 +100,9 @@ export const NewEditAutomation = ({
       };
 
       try {
-        const result = await window.db.automation.addAutomation(newAutomationData);
+        const result = await window.db.automation.addAutomation(
+          newAutomationData
+        );
         if (result.success) {
           console.log("New automation added:", result.automation);
           handleClose();
@@ -136,7 +140,9 @@ export const NewEditAutomation = ({
       // should be preserved (by not sending these fields).
 
       try {
-        const result = await window.db.automation.updateAutomation(updatedAutomationData);
+        const result = await window.db.automation.updateAutomation(
+          updatedAutomationData
+        );
         if (result.success) {
           console.log("Automation updated:", result.automation);
           handleClose();
