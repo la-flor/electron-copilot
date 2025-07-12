@@ -135,19 +135,17 @@ function seedData(db: sqlite3.Database) {
   let insertedCount = 0;
   let skippedCount = 0;
 
-  // Optional: Check if data already exists to avoid duplicates, e.g., by name
-  // For simplicity, this script will insert them. If you run it multiple times, you'll get duplicates.
-  // To make it idempotent, you might clear the table first or add unique constraints and ON CONFLICT clauses.
-
+  // Makes idempotent by checking if the automation already exists
   for (const automationData of sampleAutomationsSeedData) {
     try {
-      // Example check: (optional, remove if duplicates are fine or handled by DB constraints)
-      // const existing = db.prepare("SELECT id FROM automation WHERE name = ?").get(automationData.name);
-      // if (existing) {
-      //   console.log(`Skipping existing automation: ${automationData.name}`);
-      //   skippedCount++;
-      //   continue;
-      // }
+      const existing = db
+        .prepare("SELECT id FROM automation WHERE name = ?")
+        .get(automationData.name);
+      if (existing) {
+        console.log(`Skipping existing automation: ${automationData.name}`);
+        skippedCount++;
+        continue;
+      }
       insertStmt.run(automationData);
       insertedCount++;
     } catch (error) {
