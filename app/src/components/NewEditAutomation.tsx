@@ -1,17 +1,15 @@
 import { FormEvent, useState, useEffect, ChangeEvent } from "react";
 import { Automation } from "../shared/interfaces/database.interface";
 
-// filePath is a transient property used to pass the original file path to the main process
-// It won't be stored in the database directly as 'filePath'.
 type AutomationCreationPayload = Omit<
   Automation,
   "id" | "create_time" | "update_time" | "delete_time"
-> & { filePath?: string };
+>;
 
 type AutomationUpdatePayload = Partial<
   Omit<Automation, "create_time" | "update_time" | "delete_time">
 > &
-  Pick<Automation, "id"> & { filePath?: string };
+  Pick<Automation, "id">;
 
 interface NewEditAutomationProps {
   id: number | null;
@@ -68,12 +66,10 @@ export const NewEditAutomation = ({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // The 'path' property is specific to Electron's File object
-    const filePath = selectedFile ? selectedFile.path : undefined;
 
     if (id === null) {
       // Create new automation
-      const newAutomationData: AutomationCreationPayload = {
+      const newAutomationData: AutomationCreationPayload & { file: ArrayBuffer } = {
         name,
         description,
         cronSchedule,
@@ -88,15 +84,29 @@ export const NewEditAutomation = ({
         status: "Inactive",
         triggerEndpoint: null,
         // File related fields
-        fileName: selectedFile ? selectedFile.name : null,
-        fileSize: selectedFile ? selectedFile.size : null,
-        fileType: selectedFile ? selectedFile.type : null,
+        // ...(selectedFile
+        //   ? {
+        //       file: await selectedFile.arrayBuffer(),
+        //       fileName: selectedFile.name,
+        //       fileSize: selectedFile.size,
+        //       fileType: selectedFile.type,
+        //       fileLastModified: new Date(
+        //         selectedFile.lastModified
+        //       ).toISOString(),
+        //       // Signal backend to re-calculate checksum and update upload date for the new file
+        //       fileChecksum: null,
+        //       fileUploadDate: null,
+        //     }
+        //   : {}),
+        fileName: selectedFile?.name ?? null,
+        fileSize: selectedFile?.size ?? null,
+        fileType: selectedFile?.type ?? null,
         fileLastModified: selectedFile
           ? new Date(selectedFile.lastModified).toISOString()
           : null,
         fileChecksum: null, // Backend will calculate this
         fileUploadDate: null, // Backend will set this
-        filePath,
+        file: await selectedFile.arrayBuffer(),
       };
 
       try {
@@ -116,28 +126,27 @@ export const NewEditAutomation = ({
       }
     } else if (id !== null) {
       // Update existing automation
-      const updatedAutomationData: AutomationUpdatePayload = {
+      const updatedAutomationData: AutomationUpdatePayload & { file?: ArrayBuffer } = {
         id,
         name,
         description,
         cronSchedule,
+        ...(selectedFile
+          ? {
+              file: await selectedFile.arrayBuffer(),
+              fileName: selectedFile.name,
+              fileSize: selectedFile.size,
+              fileType: selectedFile.type,
+              fileLastModified: new Date(
+                selectedFile.lastModified
+              ).toISOString(),
+              // Signal backend to re-calculate checksum and update upload date for the new file
+              fileChecksum: null,
+              fileUploadDate: null,
+            }
+          : {}),
         // TODO: Include other fields that are editable (e.g. status)
       };
-
-      if (selectedFile) {
-        updatedAutomationData.fileName = selectedFile.name;
-        updatedAutomationData.fileSize = selectedFile.size;
-        updatedAutomationData.fileType = selectedFile.type;
-        updatedAutomationData.fileLastModified = new Date(
-          selectedFile.lastModified
-        ).toISOString();
-        updatedAutomationData.filePath = filePath;
-        // Signal backend to re-calculate checksum and update upload date for the new file
-        updatedAutomationData.fileChecksum = null;
-        updatedAutomationData.fileUploadDate = null;
-      }
-      // If no new file is selected, existing file information on the backend
-      // should be preserved (by not sending these fields).
 
       try {
         const result = await window.db.automation.updateAutomation(

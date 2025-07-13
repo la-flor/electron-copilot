@@ -213,11 +213,13 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
       automationPayload: Omit<
         Automation,
         "id" | "create_time" | "update_time" | "delete_time"
-      > & { filePath?: string }
+      > & { file?: ArrayBuffer }
     ) => {
-      const { filePath, ...automationData } = automationPayload;
+      const { file, fileName, ...automationData } = automationPayload;
 
-      if (filePath && automationData.fileName) {
+      if (file && fileName) {
+        let fileStream: fs.WriteStream;
+
         try {
           const scriptsDir = path.join(
             app.getPath("userData"),
@@ -225,14 +227,17 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
           );
           if (!fs.existsSync(scriptsDir)) {
             fs.mkdirSync(scriptsDir, { recursive: true });
-            console.log(`Created automation scripts directory: ${scriptsDir}`);
+            console.info(`Created automation scripts directory: ${scriptsDir}`);
           }
-          const destPath = path.join(scriptsDir, automationData.fileName);
-          fs.copyFileSync(filePath, destPath);
-          console.log(`Copied script file from ${filePath} to ${destPath}`);
-          // TODO: Consider calculating and storing fileChecksum here
-          // automationData.fileChecksum = calculateChecksum(destPath);
-          // automationData.fileUploadDate = new Date().toISOString();
+          const destPath = path.join(scriptsDir, fileName);
+          // Consider deleting the old file if the fileName has changed.
+          // For now, this will overwrite if same name, or add new if different name.
+          fileStream = fs.createWriteStream(destPath);
+          fileStream.write(Buffer.from(file));
+
+          console.info(
+            `Saved file ${fileName}`
+          );
         } catch (copyError) {
           console.error("Failed to copy automation script file:", copyError);
           return {
@@ -265,9 +270,9 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
     (
       _event,
       automationPatchPayload: Partial<Automation> &
-        Pick<Automation, "id"> & { filePath?: string }
+        Pick<Automation, "id"> & { file: ArrayBuffer }
     ) => {
-      const { id, filePath, ...otherFields } = automationPatchPayload;
+      const { id, file, ...otherFields } = automationPatchPayload;
 
       if (!id) {
         console.error("Update automation call missing 'id'");
@@ -320,7 +325,9 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
       }
 
       // File copy logic for updates
-      if (filePath && otherFields.fileName) {
+      if (file && otherFields.fileName) {
+        let fileStream: fs.WriteStream;
+
         try {
           const scriptsDir = path.join(
             app.getPath("userData"),
@@ -328,14 +335,16 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
           );
           if (!fs.existsSync(scriptsDir)) {
             fs.mkdirSync(scriptsDir, { recursive: true });
-            console.log(`Created automation scripts directory: ${scriptsDir}`);
+            console.info(`Created automation scripts directory: ${scriptsDir}`);
           }
           const destPath = path.join(scriptsDir, otherFields.fileName);
           // Consider deleting the old file if the fileName has changed.
           // For now, this will overwrite if same name, or add new if different name.
-          fs.copyFileSync(filePath, destPath);
-          console.log(
-            `Copied updated script file from ${filePath} to ${destPath}`
+          fileStream = fs.createWriteStream(destPath);
+          fileStream.write(Buffer.from(file));
+
+          console.info(
+            `Saved file ${otherFields.fileName}`
           );
           // Ensure file related fields in 'otherFields' are up-to-date for the DB
           // (e.g., fileChecksum might need recalculation, fileUploadDate update)
@@ -349,13 +358,15 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
             success: false,
             message: `Failed to save updated script file: ${copyError.message}`,
           };
+        } finally {
+          fileStream?.close();
         }
       }
 
       const validKeys = Object.keys(fieldsToUpdate);
 
-      if (validKeys.length === 0 && !filePath) {
-        // Also check filePath to ensure we don't skip if only file changed
+      if (validKeys.length === 0 && !file) {
+        // Also check file to ensure we don't skip if only file changed
         // If only ID is provided (and no new file), perhaps just touch update_time or return current state
         const currentAutomation = db
           .prepare("SELECT * FROM automation WHERE id = ?")
@@ -481,10 +492,25 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
             }
           });
         });
+      } else if (automation.fileName.endsWith(".sh")) {
+        return new Promise((resolve) => {
+          execFile("bash", [scriptPath], (error, stdout, stderr) => {
+            if (error) {
+              resolve({
+                success: false,
+                error: stderr || error.message,
+                output: stdout,
+                message: "Shell script execution failed.",
+              });
+            } else {
+              resolve({ success: true, output: stdout, error: stderr });
+            }
+          });
+        });
       } else {
         return {
           success: false,
-          message: `File type not supported for execution: ${automation.fileName}. Only .py files are currently supported.`,
+          message: `File type not supported for execution: ${automation.fileName}. Only .py and .sh files are currently supported.`,
         };
       }
     }

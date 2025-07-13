@@ -83,7 +83,6 @@ export const Automations = () => {
         setTestExecutionResult({
           automationId,
           output: result.output,
-          error: result.error,
           isLoading: false,
         });
       } else {
@@ -266,7 +265,8 @@ export const Automations = () => {
                     </p>
                   )}
                   <p className="card-text">
-                    <strong>Output:</strong> {automation.cronLastRunOutput}
+                    <strong>Output:</strong>
+                    {automation.cronLastRunOutput}
                   </p>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export const Automations = () => {
               <div className="mt-2">
                 <h6>Test Execution Result:</h6>
                 {testExecutionResult.output && (
-                  <pre className="alert alert-secondary">
+                  <pre className={`alert ${testExecutionResult.error ? 'alert-secondary' : 'alert-success'}`}>
                     <strong>Output:</strong>
                     <br />
                     {testExecutionResult.output}

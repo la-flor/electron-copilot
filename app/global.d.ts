@@ -1,6 +1,5 @@
 import { User, Automation } from "./src/shared/interfaces/database.interface";
 
-// filepath: /path/to/global.d.ts
 export {};
 
 declare global {
@@ -9,7 +8,12 @@ declare global {
       user: {
         fetchUser: (id: number) => Promise<User | undefined>;
         fetchUsers: () => Promise<User[]>;
-        updateUser: (user: Partial<User> & Pick<User, "id">) => Promise<{ success: boolean; user?: User; message?: string; changes?: number }>;
+        updateUser: (user: Partial<User> & Pick<User, "id">) => Promise<{
+          success: boolean;
+          user?: User;
+          message?: string;
+          changes?: number;
+        }>;
         loginUser: (
           credentials: Pick<User, "email" | "password">
         ) => Promise<{ success: boolean; user?: User; message?: string }>;
@@ -18,17 +22,32 @@ declare global {
       automation: {
         fetchAutomations: () => Promise<Automation[]>;
         addAutomation: (
-          automation: Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">
-        ) => Promise<{ success: boolean; automation?: Automation; message?: string }>;
+          automation: Omit<
+            Automation,
+            "id" | "create_time" | "update_time" | "delete_time"
+          > & { file?: ArrayBuffer }
+        ) => Promise<{
+          success: boolean;
+          automation?: Automation;
+          message?: string;
+        }>;
         updateAutomation: (
-          automation: Partial<Automation> & Pick<Automation, "id">
-        ) => Promise<{ success: boolean; automation?: Automation; message?: string }>;
+          automation: Partial<Automation> &
+            Pick<Automation, "id" & { file: ArrayBuffer }>
+        ) => Promise<{
+          success: boolean;
+          automation?: Automation;
+          message?: string;
+        }>;
         deleteAutomation: (
           id: number
         ) => Promise<{ success: boolean; id?: number; message?: string }>;
-        testExecuteAutomation: (
-          id: number
-        ) => Promise<{ success: boolean; output?: string; error?: string; message?: string }>;
+        testExecuteAutomation: (id: number) => Promise<{
+          success: boolean;
+          output?: string;
+          error?: string;
+          message?: string;
+        }>;
       };
     };
   }

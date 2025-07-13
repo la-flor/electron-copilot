@@ -23,11 +23,11 @@ contextBridge.exposeInMainWorld("db", {
     fetchAutomations: (): Promise<Automation[]> =>
       ipcRenderer.invoke("database:fetchAutomations"),
     addAutomation: (
-      automation: Omit<Automation, "id" | "create_time" | "update_time" | "delete_time">
+      automation: Omit<Automation, "id" | "create_time" | "update_time" | "delete_time"> & { file?: ArrayBuffer }
     ): Promise<{ success: boolean; automation?: Automation; message?: string }> =>
       ipcRenderer.invoke("database:addAutomation", automation),
     updateAutomation: (
-      automation: Partial<Automation> & Pick<Automation, "id">
+      automation: Partial<Automation> & Pick<Automation, "id"> & { file?: ArrayBuffer }
     ): Promise<{ success: boolean; automation?: Automation; message?: string }> =>
       ipcRenderer.invoke("database:updateAutomation", automation),
     deleteAutomation: (
