@@ -32,7 +32,6 @@ const LoginPage: React.FC = () => {
 		try {
 			const result = await window.db.user.loginUser({ email, password });
 			if (result.success && result.user) {
-				console.log('Login successful', result.user);
 				login(result.user); // Update auth context
 				// Navigation is handled by the useEffect or will happen if 'from' is set
 				// navigate(from, { replace: true }); // This line is now handled by useEffect

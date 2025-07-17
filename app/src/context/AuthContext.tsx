@@ -10,8 +10,8 @@ import { User } from '../shared/interfaces/database.interface';
 
 interface AuthContextType {
 	isAuthenticated: boolean;
-	user: User | null;
-	login: (userData: User) => void;
+	user: Omit<User, 'password'> | null;
+	login: (userData: Omit<User, 'password'>) => void;
 	logout: () => void;
 	isLoading: boolean;
 }
@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 	children,
 }) => {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-	const [user, setUser] = useState<User | null>(null);
+	const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const navigate = useNavigate(); // Hook for navigation
 
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 		setIsLoading(false);
 	}, []);
 
-	const login = (userData: User) => {
+	const login = (userData: Omit<User, 'password'>) => {
 		setIsAuthenticated(true);
 		setUser(userData);
 		sessionStorage.setItem('currentUser', JSON.stringify(userData));

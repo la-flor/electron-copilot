@@ -6,19 +6,23 @@ declare global {
 	interface Window {
 		db: {
 			user: {
-				fetchUser: (id: number) => Promise<User | undefined>;
-				fetchUsers: () => Promise<User[]>;
+				fetchUser: (id: number) => Promise<Omit<User, 'password'> | undefined>;
+				fetchUsers: () => Promise<Omit<User, 'password'>[]>;
 				updateUser: (
 					user: Partial<User> & Pick<User, 'id'>,
 				) => Promise<{
 					success: boolean;
-					user?: User;
+					user?: Omit<User, 'password'>;
 					message?: string;
 					changes?: number;
 				}>;
 				loginUser: (
 					credentials: Pick<User, 'email' | 'password'>,
-				) => Promise<{ success: boolean; user?: User; message?: string }>;
+				) => Promise<{
+					success: boolean;
+					user?: Omit<User, 'password'>;
+					message?: string;
+				}>;
 				// addUser is missing here, but present in preload. Let's assume it's not used in frontend directly or add if needed.
 			};
 			automation: {

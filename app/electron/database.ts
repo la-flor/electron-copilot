@@ -70,12 +70,16 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 	initializeDatabaseConnection(app);
 
 	ipcMain.handle('database:fetchUsers', () => {
-		const stmt = db.prepare('SELECT * FROM user');
+		const stmt = db.prepare(
+			'SELECT id, first_name, last_name, email, create_time, update_time, delete_time, dark FROM user',
+		);
 		return stmt.all();
 	});
 
 	ipcMain.handle('database:fetchUser', (_event, id: number) => {
-		const stmt = db.prepare('SELECT * FROM user WHERE id = ?');
+		const stmt = db.prepare(
+			'SELECT id, first_name, last_name, email, create_time, update_time, delete_time, dark FROM user WHERE id = ?',
+		);
 		return stmt.get(id);
 	});
 
@@ -90,7 +94,12 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		// IMPORTANT: In a real application, passwords should be hashed and compared securely.
 		// This is a simplified example and is NOT secure for production.
 		const stmt = db.prepare(
-			'SELECT * FROM user WHERE email = ? AND password = ? AND delete_time IS NULL',
+			`SELECT
+                id, first_name, last_name, email, create_time, update_time, delete_time, dark
+            FROM
+                user
+            WHERE
+                email = ? AND password = ? AND delete_time IS NULL`,
 		);
 		const user = stmt.get(email, password);
 		if (user) {
@@ -98,9 +107,16 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		} else {
 			// Check if user exists with that email but wrong password for a more specific error
 			const userExistsStmt = db.prepare(
-				'SELECT * FROM user WHERE email = ? AND delete_time IS NULL',
+				`SELECT
+                    id, first_name, last_name, email, create_time, update_time, delete_time, dark
+                FROM
+                    user
+                WHERE
+                    email = ?
+                AND
+                    delete_time IS NULL`,
 			);
-			const existingUser = userExistsStmt.get(email);
+			const existingUser = userExistsStmt.get(email) as User | undefined;
 			if (existingUser) {
 				return { success: false, message: 'Invalid password.' };
 			}
@@ -145,16 +161,27 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		if (validKeys.length === 0) {
 			try {
 				const userExistsStmt = db.prepare('SELECT id FROM user WHERE id = ?');
-				const userExists = userExistsStmt.get(parseInt(id as string, 10));
+				const userExists = userExistsStmt.get(parseInt(id, 10)) as
+					| Omit<User, 'password'>
+					| undefined;
 				if (!userExists) {
 					return { success: false, message: `User with id ${id} not found.` };
 				}
 				const stmt = db.prepare(
 					'UPDATE user SET update_time = CURRENT_TIMESTAMP WHERE id = ?',
 				);
-				stmt.run(parseInt(id as string, 10));
-				const updatedUserStmt = db.prepare('SELECT * FROM user WHERE id = ?');
-				const updatedUser = updatedUserStmt.get(parseInt(id as string, 10));
+				stmt.run(parseInt(id, 10));
+				const updatedUserStmt = db.prepare(`
+                    SELECT
+                        id, first_name, last_name, email, create_time, update_time, delete_time, dark
+                    FROM
+                        user
+                    WHERE
+                        id = ?`);
+				const updatedUser = updatedUserStmt.get(parseInt(id, 10)) as
+					| Omit<User, 'password'>
+					| undefined;
+
 				return {
 					success: true,
 					user: updatedUser,
@@ -181,7 +208,12 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 			const stmt = db.prepare(query);
 			const info = stmt.run(...values);
 
-			const updatedUserStmt = db.prepare('SELECT * FROM user WHERE id = ?');
+			const updatedUserStmt = db.prepare(`SELECT
+                id, first_name, last_name, email, create_time, update_time, delete_time, dark
+            FROM
+                user
+            WHERE
+                id = ?`);
 			const updatedUser = updatedUserStmt.get(parseInt(id as string, 10));
 
 			if (!updatedUser) {
