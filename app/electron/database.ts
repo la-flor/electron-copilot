@@ -215,9 +215,9 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 				'id' | 'create_time' | 'update_time' | 'delete_time'
 			> & { file?: ArrayBuffer },
 		) => {
-			const { file, fileName, ...automationData } = automationPayload;
+			const { file, ...automationData } = automationPayload;
 
-			if (file && fileName) {
+			if (file && automationData.fileName) {
 				let fileStream: fs.WriteStream;
 
 				try {
@@ -229,13 +229,13 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 						fs.mkdirSync(scriptsDir, { recursive: true });
 						console.info(`Created automation scripts directory: ${scriptsDir}`);
 					}
-					const destPath = path.join(scriptsDir, fileName);
+					const destPath = path.join(scriptsDir, automationData.fileName);
 					// Consider deleting the old file if the fileName has changed.
 					// For now, this will overwrite if same name, or add new if different name.
 					fileStream = fs.createWriteStream(destPath);
 					fileStream.write(Buffer.from(file));
 
-					console.info(`Saved file ${fileName}`);
+					console.info(`Saved file ${automationData.fileName}`);
 				} catch (copyError) {
 					console.error('Failed to copy automation script file:', copyError);
 					return {
@@ -247,12 +247,12 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 
 			const stmt = db.prepare(
 				`INSERT INTO automation (
-        name, description, cronSchedule, cronTimezone, cronDescription, status, 
-        fileName, fileSize, fileType, fileLastModified, fileChecksum, fileUploadDate, triggerEndpoint
-      ) VALUES (
-        @name, @description, @cronSchedule, @cronTimezone, @cronDescription, @status,
-        @fileName, @fileSize, @fileType, @fileLastModified, @fileChecksum, @fileUploadDate, @triggerEndpoint
-      )`,
+                    name, description, cronSchedule, cronTimezone, cronDescription, status, 
+                    fileName, fileSize, fileType, fileLastModified, fileChecksum, fileUploadDate, triggerEndpoint
+                ) VALUES (
+                    @name, @description, @cronSchedule, @cronTimezone, @cronDescription, @status,
+                    @fileName, @fileSize, @fileType, @fileLastModified, @fileChecksum, @fileUploadDate, @triggerEndpoint
+                )`,
 			);
 			const info = stmt.run(automationData);
 			const newAutomationId = info.lastInsertRowid;
