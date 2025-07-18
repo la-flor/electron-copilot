@@ -1,8 +1,44 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 export const Settings = () => {
 	const { user, login } = useContext(AuthContext);
+	const [apiProvider, setApiProvider] = useState('gemini');
+	const [geminiApiKey, setGeminiApiKey] = useState('');
+	const [ollamaHost, setOllamaHost] = useState('');
+
+	useEffect(() => {
+		if (user) {
+			setApiProvider((user as any).apiProvider || 'gemini');
+			setGeminiApiKey((user as any).geminiApiKey || '');
+			setOllamaHost((user as any).ollamaHost || '');
+		}
+	}, [user]);
+
+	const handleApiSettingsSave = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (user) {
+			const updatedSettings: any = {
+				id: user.id,
+				apiProvider,
+			};
+
+			if (apiProvider === 'gemini') {
+				updatedSettings.geminiApiKey = geminiApiKey;
+			} else if (apiProvider === 'ollama') {
+				updatedSettings.ollamaHost = ollamaHost;
+			}
+
+			try {
+				await window.db.user.updateUser(updatedSettings);
+				login({ ...user, ...updatedSettings });
+				alert('API settings saved!');
+			} catch (error) {
+				console.error('Failed to update API settings:', error);
+				alert('Failed to save API settings.');
+			}
+		}
+	};
 
 	const handleDarkModeChange = async () => {
 		if (user) {
@@ -67,6 +103,79 @@ export const Settings = () => {
 							Notifications
 						</label>
 					</div>
+				</div>
+			</div>
+
+			<div className='card mt-3'>
+				<div className='card-body'>
+					<h5 className='card-title'>API Credentials</h5>
+					<form onSubmit={handleApiSettingsSave}>
+						<div className='mb-3'>
+							<label className='form-label'>API Provider</label>
+							<div className='form-check'>
+								<input
+									className='form-check-input'
+									type='radio'
+									name='apiProvider'
+									id='gemini'
+									value='gemini'
+									checked={apiProvider === 'gemini'}
+									onChange={(e) => setApiProvider(e.target.value)}
+								/>
+								<label className='form-check-label' htmlFor='gemini'>
+									Gemini
+								</label>
+							</div>
+							<div className='form-check'>
+								<input
+									className='form-check-input'
+									type='radio'
+									name='apiProvider'
+									id='ollama'
+									value='ollama'
+									checked={apiProvider === 'ollama'}
+									onChange={(e) => setApiProvider(e.target.value)}
+								/>
+								<label className='form-check-label' htmlFor='ollama'>
+									Ollama
+								</label>
+							</div>
+						</div>
+
+						{apiProvider === 'gemini' && (
+							<div className='mb-3'>
+								<label htmlFor='gemini-api-key' className='form-label'>
+									Gemini API Key
+								</label>
+								<input
+									type='password'
+									className='form-control'
+									id='gemini-api-key'
+									value={geminiApiKey}
+									onChange={(e) => setGeminiApiKey(e.target.value)}
+								/>
+							</div>
+						)}
+
+						{apiProvider === 'ollama' && (
+							<div className='mb-3'>
+								<label htmlFor='ollama-host' className='form-label'>
+									Ollama Host URL
+								</label>
+								<input
+									type='text'
+									className='form-control'
+									id='ollama-host'
+									value={ollamaHost}
+									onChange={(e) => setOllamaHost(e.target.value)}
+									placeholder='http://localhost:11434'
+								/>
+							</div>
+						)}
+						<button type='submit' className='btn btn-primary'>
+							Save API Settings
+						</button>
+					</form>
 				</div>
 			</div>
 		</div>
