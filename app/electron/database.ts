@@ -563,6 +563,35 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		},
 	);
 
+	ipcMain.handle('ollama:listModels', async (_event, userId: number) => {
+		const apiKeyStmt = db.prepare(
+			'SELECT hostname FROM api_keys WHERE user_id = ? AND provider = ? AND delete_time IS NULL',
+		);
+		const ollamaConfig = apiKeyStmt.get(userId, 'ollama') as
+			| { hostname: string }
+			| undefined;
+
+		if (!ollamaConfig?.hostname) {
+			return {
+				success: false,
+				message: 'Ollama host not configured in settings.',
+			};
+		}
+
+		try {
+			const response = await fetch(`${ollamaConfig.hostname}/api/tags`);
+			if (!response.ok) {
+				const errorBody = await response.text();
+				throw new Error(`Ollama API returned ${response.status}: ${errorBody}`);
+			}
+			const data = await response.json();
+			return { success: true, models: data.models };
+		} catch (error: any) {
+			console.error('Failed to fetch Ollama models:', error);
+			return { success: false, message: error.message };
+		}
+	});
+
 	// API Key Handlers
 	ipcMain.handle('database:fetchApiKeysForUser', (_event, userId: number) => {
 		const stmt = db.prepare(

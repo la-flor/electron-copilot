@@ -1,6 +1,7 @@
 import {
 	ApiKey,
 	Automation,
+	OllamaModel,
 	User,
 } from './src/shared/interfaces/database.interface';
 
@@ -69,6 +70,13 @@ declare global {
 						'id' | 'create_time' | 'update_time' | 'delete_time'
 					>,
 				) => Promise<{ success: boolean; apiKey?: ApiKey; message?: string }>;
+			};
+			ollama: {
+				listModels: (userId: number) => Promise<{
+					success: boolean;
+					models?: OllamaModel[];
+					message?: string;
+				}>;
 			};
 		};
 	}

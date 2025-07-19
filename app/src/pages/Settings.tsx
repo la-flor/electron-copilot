@@ -48,7 +48,7 @@ export const Settings = () => {
 			await window.db.apiKey.upsertApiKey({
 				user_id: user.id,
 				provider: 'ollama',
-				api_key: null,
+				api_key: '',
 				hostname: ollamaHost,
 			});
 
@@ -187,7 +187,6 @@ export const Settings = () => {
 									id='ollama-host'
 									value={ollamaHost}
 									onChange={(e) => setOllamaHost(e.target.value)}
-									placeholder='http://localhost:11434'
 								/>
 							</div>
 						)}
