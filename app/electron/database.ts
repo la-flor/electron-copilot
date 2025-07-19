@@ -3,7 +3,11 @@ import { execFile } from 'child_process';
 import { App, IpcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { Automation, User } from '../src/shared/interfaces/database.interface';
+import {
+	ApiKey,
+	Automation,
+	User,
+} from '../src/shared/interfaces/database.interface';
 
 let db: sqlite3.Database;
 
@@ -64,6 +68,21 @@ const initializeDatabaseConnection = (app: App) => {
         delete_time TEXT
     ) STRICT;
     `);
+
+	db.exec(`
+		CREATE TABLE IF NOT EXISTS "api_keys" (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			provider TEXT NOT NULL,
+			api_key TEXT,
+			hostname TEXT,
+			create_time TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			update_time TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			delete_time TEXT,
+			FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE,
+			UNIQUE(user_id, provider)
+		) STRICT;
+	`);
 };
 
 export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
@@ -161,7 +180,7 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		if (validKeys.length === 0) {
 			try {
 				const userExistsStmt = db.prepare('SELECT id FROM user WHERE id = ?');
-				const userExists = userExistsStmt.get(parseInt(id, 10)) as
+				const userExists = userExistsStmt.get(id) as
 					| Omit<User, 'password'>
 					| undefined;
 				if (!userExists) {
@@ -170,7 +189,7 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 				const stmt = db.prepare(
 					'UPDATE user SET update_time = CURRENT_TIMESTAMP WHERE id = ?',
 				);
-				stmt.run(parseInt(id, 10));
+				stmt.run(id);
 				const updatedUserStmt = db.prepare(`
                     SELECT
                         id, first_name, last_name, email, create_time, update_time, delete_time, dark
@@ -178,7 +197,7 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
                         user
                     WHERE
                         id = ?`);
-				const updatedUser = updatedUserStmt.get(parseInt(id, 10)) as
+				const updatedUser = updatedUserStmt.get(id) as
 					| Omit<User, 'password'>
 					| undefined;
 
@@ -202,7 +221,7 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 		const values = validKeys.map((key) => (fieldsToUpdate as any)[key]);
 
 		const query = `UPDATE user SET ${setClauses}, update_time = CURRENT_TIMESTAMP WHERE id = ?`;
-		values.push(parseInt(id as string, 10)); // Convert string id to number for SQL
+		values.push(id);
 
 		try {
 			const stmt = db.prepare(query);
@@ -214,7 +233,7 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
                 user
             WHERE
                 id = ?`);
-			const updatedUser = updatedUserStmt.get(parseInt(id as string, 10));
+			const updatedUser = updatedUserStmt.get(id);
 
 			if (!updatedUser) {
 				return {
@@ -540,6 +559,46 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 					success: false,
 					message: `File type not supported for execution: ${automation.fileName}. Only .py and .sh files are currently supported.`,
 				};
+			}
+		},
+	);
+
+	// API Key Handlers
+	ipcMain.handle('database:fetchApiKeysForUser', (_event, userId: number) => {
+		const stmt = db.prepare(
+			'SELECT * FROM api_keys WHERE user_id = ? AND delete_time IS NULL',
+		);
+		return stmt.all(userId);
+	});
+
+	ipcMain.handle(
+		'database:upsertApiKey',
+		(
+			_event,
+			apiKey: Omit<
+				ApiKey,
+				'id' | 'create_time' | 'update_time' | 'delete_time'
+			>,
+		) => {
+			const { user_id, provider, api_key, hostname } = apiKey;
+			const stmt = db.prepare(
+				`INSERT INTO api_keys (user_id, provider, api_key, hostname)
+                VALUES (@user_id, @provider, @api_key, @hostname)
+                ON CONFLICT(user_id, provider) DO UPDATE SET
+                api_key = excluded.api_key,
+                hostname = excluded.hostname,
+                update_time = CURRENT_TIMESTAMP`,
+			);
+			try {
+				stmt.run({ user_id, provider, api_key, hostname });
+				const updatedKeyStmt = db.prepare(
+					'SELECT * FROM api_keys WHERE user_id = ? AND provider = ?',
+				);
+				const updatedKey = updatedKeyStmt.get(user_id, provider);
+				return { success: true, apiKey: updatedKey };
+			} catch (error: any) {
+				console.error('Failed to upsert API key:', error);
+				return { success: false, message: error.message };
 			}
 		},
 	);
