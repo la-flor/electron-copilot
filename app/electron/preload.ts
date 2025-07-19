@@ -2,6 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from 'electron';
 import {
+	ApiKey,
 	Automation,
 	User,
 } from '../../app/src/shared/interfaces/database.interface';
@@ -21,6 +22,21 @@ contextBridge.exposeInMainWorld('db', {
 			credentials: Pick<User, 'email' | 'password'>,
 		): Promise<{ success: boolean; user?: User; message?: string }> =>
 			ipcRenderer.invoke('database:loginUser', credentials),
+	},
+	apiKey: {
+		fetchApiKeysForUser: (userId: number): Promise<ApiKey[]> =>
+			ipcRenderer.invoke('database:fetchApiKeysForUser', userId),
+		upsertApiKey: (
+			apiKey: Omit<
+				ApiKey,
+				'id' | 'create_time' | 'update_time' | 'delete_time'
+			>,
+		): Promise<{ success: boolean; apiKey?: ApiKey; message?: string }> =>
+			ipcRenderer.invoke('database:upsertApiKey', apiKey),
+		deleteApiKey: (
+			id: number,
+		): Promise<{ success: boolean; id?: number; message?: string }> =>
+			ipcRenderer.invoke('database:deleteApiKey', id),
 	},
 	automation: {
 		fetchAutomations: (): Promise<Automation[]> =>

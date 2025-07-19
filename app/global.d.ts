@@ -1,4 +1,8 @@
-import { Automation, User } from './src/shared/interfaces/database.interface';
+import {
+	ApiKey,
+	Automation,
+	User,
+} from './src/shared/interfaces/database.interface';
 
 export {};
 
@@ -56,6 +60,15 @@ declare global {
 					error?: string;
 					message?: string;
 				}>;
+			};
+			apiKey: {
+				fetchApiKeysForUser: (userId: number) => Promise<ApiKey[]>;
+				upsertApiKey: (
+					apiKey: Omit<
+						ApiKey,
+						'id' | 'create_time' | 'update_time' | 'delete_time'
+					>,
+				) => Promise<{ success: boolean; apiKey?: ApiKey; message?: string }>;
 			};
 		};
 	}

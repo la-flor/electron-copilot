@@ -1,5 +1,5 @@
 export interface User {
-	id: string;
+	id: number;
 	first_name: string;
 	last_name: string;
 	email: string;
@@ -35,4 +35,15 @@ export interface Automation {
 	create_time: string; // ISO date string
 	update_time: string; // ISO date string
 	delete_time: string | null; // ISO date string
+}
+
+export interface ApiKey {
+	id: number;
+	user_id: number;
+	provider: string; // e.g., 'gemini', 'ollama'
+	api_key: string | null;
+	hostname: string | null;
+	create_time: string;
+	update_time: string;
+	delete_time: string | null;
 }

@@ -9,34 +9,53 @@ export const Settings = () => {
 
 	useEffect(() => {
 		if (user) {
-			setApiProvider((user as any).apiProvider || 'gemini');
-			setGeminiApiKey((user as any).geminiApiKey || '');
-			setOllamaHost((user as any).ollamaHost || '');
+			const fetchApiKeys = async () => {
+				try {
+					const apiKeys = await window.db.apiKey.fetchApiKeysForUser(user.id);
+					if (apiKeys) {
+						const geminiKey = apiKeys.find((k) => k.provider === 'gemini');
+						if (geminiKey) {
+							setGeminiApiKey(geminiKey.api_key || '');
+						}
+
+						const ollamaKey = apiKeys.find((k) => k.provider === 'ollama');
+						if (ollamaKey) {
+							setOllamaHost(ollamaKey.hostname || '');
+						}
+					}
+				} catch (error) {
+					console.error('Failed to fetch API keys:', error);
+				}
+			};
+			fetchApiKeys();
 		}
 	}, [user]);
 
 	const handleApiSettingsSave = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (user) {
-			const updatedSettings: any = {
-				id: user.id,
-				apiProvider,
-			};
+		if (!user) return;
 
-			if (apiProvider === 'gemini') {
-				updatedSettings.geminiApiKey = geminiApiKey;
-			} else if (apiProvider === 'ollama') {
-				updatedSettings.ollamaHost = ollamaHost;
-			}
+		try {
+			// Upsert Gemini Key
+			await window.db.apiKey.upsertApiKey({
+				user_id: user.id,
+				provider: 'gemini',
+				api_key: geminiApiKey,
+				hostname: null,
+			});
 
-			try {
-				await window.db.user.updateUser(updatedSettings);
-				login({ ...user, ...updatedSettings });
-				alert('API settings saved!');
-			} catch (error) {
-				console.error('Failed to update API settings:', error);
-				alert('Failed to save API settings.');
-			}
+			// Upsert Ollama Host
+			await window.db.apiKey.upsertApiKey({
+				user_id: user.id,
+				provider: 'ollama',
+				api_key: null,
+				hostname: ollamaHost,
+			});
+
+			alert('API settings saved!');
+		} catch (error) {
+			console.error('Failed to save API settings:', error);
+			alert('Failed to save API settings.');
 		}
 	};
 
