@@ -47,3 +47,10 @@ export interface ApiKey {
 	update_time: string;
 	delete_time: string | null;
 }
+
+export interface OllamaModel {
+	name: string;
+	modified_at: string;
+	size: number;
+	digest: string;
+}

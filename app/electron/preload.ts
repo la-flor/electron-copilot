@@ -4,6 +4,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import {
 	ApiKey,
 	Automation,
+	OllamaModel,
 	User,
 } from '../../app/src/shared/interfaces/database.interface';
 
@@ -37,6 +38,15 @@ contextBridge.exposeInMainWorld('db', {
 			id: number,
 		): Promise<{ success: boolean; id?: number; message?: string }> =>
 			ipcRenderer.invoke('database:deleteApiKey', id),
+	},
+	ollama: {
+		listModels: (
+			userId: number,
+		): Promise<{
+			success: boolean;
+			models?: OllamaModel[];
+			message?: string;
+		}> => ipcRenderer.invoke('ollama:listModels', userId),
 	},
 	automation: {
 		fetchAutomations: (): Promise<Automation[]> =>
