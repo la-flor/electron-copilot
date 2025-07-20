@@ -4,13 +4,20 @@ import { streamComplete } from '../services/stream';
 import { OllamaModel } from '../shared/interfaces/database.interface';
 import './home.scss';
 
+interface ChatMessage {
+	sender: 'user' | 'ai';
+	text: string;
+	model: string;
+	provider: string;
+}
+
 const Home = () => {
 	const { user } = useContext(AuthContext);
 	const [provider, setProvider] = useState('gemini');
 	const [models, setModels] = useState<OllamaModel[]>([]);
 	const [model, setModel] = useState('gemini-pro');
 	const [userPrompt, setUserPrompt] = useState('Provide me with a 5 line poem');
-	const [response, setResponse] = useState<string[]>([]);
+	const [response, setResponse] = useState<ChatMessage[]>([]);
 	const [error, setError] = useState<string>('');
 
 	useEffect(() => {
@@ -48,11 +55,20 @@ const Home = () => {
 			return;
 		}
 		try {
-			setResponse((prev) => [
-				...prev,
-				`\n> **Me (using ${provider}/${model}):**\n${userPrompt}\n\n**${model}:**`,
-				'',
-			]);
+			const userMessage: ChatMessage = {
+				sender: 'user',
+				text: userPrompt,
+				provider,
+				model,
+			};
+
+			const aiMessagePlaceholder: ChatMessage = {
+				sender: 'ai',
+				text: '',
+				provider,
+				model,
+			};
+			setResponse((prev) => [...prev, userMessage, aiMessagePlaceholder]);
 			setUserPrompt('');
 			// The streamComplete function will need to be updated to accept provider and model.
 			// For now, this will continue to use the default.
@@ -60,10 +76,14 @@ const Home = () => {
 			for await (const { chunk } of streamComplete(userPrompt)) {
 				setResponse((prev) => {
 					if (prev.length === 0) {
-						return [chunk];
+						return [];
 					}
-					const lastIdx = prev.length - 1;
-					return [...prev.slice(0, lastIdx), prev[lastIdx] + chunk];
+					const lastMessage = prev[prev.length - 1];
+					const updatedLastMessage = {
+						...lastMessage,
+						text: lastMessage.text + chunk,
+					};
+					return [...prev.slice(0, -1), updatedLastMessage];
 				});
 			}
 		} catch (err) {
@@ -112,12 +132,32 @@ const Home = () => {
 				</div>
 			</div>
 			{error && <div className='alert alert-danger mx-2'>{error}</div>}
-			<div id='chat-output'>
-				{response.map((resp, i) =>
-					resp
-						.split('\n')
-						.map((line, j) => <article key={`${i}-${j}`}>{line}</article>),
-				)}
+			<div id='chat-output' className='p-3'>
+				{response.map((message, i) => (
+					<div
+						key={i}
+						className={`d-flex mb-2 ${
+							message.sender === 'user'
+								? 'justify-content-end'
+								: 'justify-content-start'
+						}`}
+					>
+						<div
+							className={`card ${
+								message.sender === 'user'
+									? 'bg-primary text-white'
+									: 'bg-light text-dark'
+							}`}
+							style={{ maxWidth: '70%', borderRadius: '1rem' }}
+						>
+							<div className='card-body py-2 px-3'>
+								<p className='card-text' style={{ whiteSpace: 'pre-wrap' }}>
+									{message.text}
+								</p>
+							</div>
+						</div>
+					</div>
+				))}
 			</div>
 
 			<form onSubmit={handleSubmit}>
