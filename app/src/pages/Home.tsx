@@ -55,6 +55,16 @@ const Home = () => {
 			return;
 		}
 		try {
+			const historyForPrompt = response
+				.map(
+					(message) =>
+						`${message.sender === 'user' ? 'User' : 'AI'}: ${message.text}`,
+				)
+				.join('\n');
+			const fullPrompt = historyForPrompt
+				? `${historyForPrompt}\nUser: ${userPrompt}`
+				: `User: ${userPrompt}`;
+
 			const userMessage: ChatMessage = {
 				sender: 'user',
 				text: userPrompt,
@@ -73,7 +83,7 @@ const Home = () => {
 			// The streamComplete function will need to be updated to accept provider and model.
 			// For now, this will continue to use the default.
 			// for await (const { chunk } of streamComplete(userPrompt, { provider, model })) {
-			for await (const { chunk } of streamComplete(userPrompt)) {
+			for await (const { chunk } of streamComplete(fullPrompt)) {
 				setResponse((prev) => {
 					if (prev.length === 0) {
 						return [];
