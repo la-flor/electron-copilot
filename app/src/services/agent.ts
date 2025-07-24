@@ -1,4 +1,4 @@
-import { ChatOllama } from '@langchain/community/chat_models/ollama/web';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { type Runnable } from '@langchain/core/runnables';
 import { END, StateGraph } from '@langchain/langgraph/web';
