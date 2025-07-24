@@ -13,6 +13,7 @@ interface ChatMessage {
 
 const Home = () => {
 	const { user } = useContext(AuthContext);
+	const [chatMode, setChatMode] = useState<'chat' | 'agent'>('chat');
 	const [provider, setProvider] = useState('gemini');
 	const [models, setModels] = useState<OllamaModel[]>([]);
 	const [model, setModel] = useState('gemini-pro');
@@ -54,56 +55,133 @@ const Home = () => {
 			alert('Please select a model.');
 			return;
 		}
+
+		if (chatMode === 'agent' && provider !== 'ollama') {
+			alert('Agent mode currently only supports Ollama models.');
+			return;
+		}
+
+		const userMessage: ChatMessage = {
+			sender: 'user',
+			text: userPrompt,
+			provider,
+			model,
+		};
+		const aiMessagePlaceholder: ChatMessage = {
+			sender: 'ai',
+			text: '',
+			provider,
+			model,
+		};
+		setResponse((prev) => [...prev, userMessage, aiMessagePlaceholder]);
+
+		const currentPrompt = userPrompt;
+		setUserPrompt('');
+
 		try {
-			const historyForPrompt = response
-				.map(
-					(message) =>
-						`${message.sender === 'user' ? 'User' : 'AI'}: ${message.text}`,
-				)
-				.join('\n');
-			const fullPrompt = historyForPrompt
-				? `${historyForPrompt}\nUser: ${userPrompt}`
-				: `User: ${userPrompt}`;
+			if (chatMode === 'agent') {
+				const history = response.map((msg) => ({
+					type: msg.sender === 'user' ? 'human' : 'ai',
+					content: msg.text,
+				}));
 
-			const userMessage: ChatMessage = {
-				sender: 'user',
-				text: userPrompt,
-				provider,
-				model,
-			};
+				const channel = `agent-response-${Date.now()}`;
 
-			const aiMessagePlaceholder: ChatMessage = {
-				sender: 'ai',
-				text: '',
-				provider,
-				model,
-			};
-			setResponse((prev) => [...prev, userMessage, aiMessagePlaceholder]);
-			setUserPrompt('');
-			// The streamComplete function will need to be updated to accept provider and model.
-			// For now, this will continue to use the default.
-			// for await (const { chunk } of streamComplete(userPrompt, { provider, model })) {
-			for await (const { chunk } of streamComplete(fullPrompt)) {
-				setResponse((prev) => {
-					if (prev.length === 0) {
-						return [];
-					}
-					const lastMessage = prev[prev.length - 1];
-					const updatedLastMessage = {
-						...lastMessage,
-						text: lastMessage.text + chunk,
-					};
-					return [...prev.slice(0, -1), updatedLastMessage];
+				const handleData = (_event: any, { chunk }: { chunk: string }) => {
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: lastMessage.text + chunk,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+				};
+
+				const handleError = (_event: any, { message }: { message: string }) => {
+					console.error('Agent stream error:', message);
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: `An error occurred: ${message}`,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+					cleanup();
+				};
+
+				const cleanup = () => {
+					window.agent.off(`${channel}-data`, handleData);
+					window.agent.off(`${channel}-end`, cleanup);
+					window.agent.off(`${channel}-error`, handleError);
+				};
+
+				window.agent.on(`${channel}-data`, handleData);
+				window.agent.on(`${channel}-end`, cleanup);
+				window.agent.on(`${channel}-error`, handleError);
+
+				window.agent.stream(channel, currentPrompt, {
+					provider: 'ollama',
+					model,
+					history,
 				});
+			} else {
+				const historyForPrompt = response
+					.map(
+						(message) =>
+							`${message.sender === 'user' ? 'User' : 'AI'}: ${message.text}`,
+					)
+					.join('\n');
+				const fullPrompt = historyForPrompt
+					? `${historyForPrompt}\nUser: ${currentPrompt}`
+					: `User: ${currentPrompt}`;
+				const stream = streamComplete(fullPrompt);
+				for await (const { chunk } of stream) {
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: lastMessage.text + chunk,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+				}
 			}
 		} catch (err) {
 			console.log(err);
+			setResponse((prev) => {
+				if (prev.length === 0) return [];
+				const lastMessage = prev[prev.length - 1];
+				const updatedLastMessage = {
+					...lastMessage,
+					text: `An error occurred: ${err.message}`,
+				};
+				return [...prev.slice(0, -1), updatedLastMessage];
+			});
 		}
 	};
 
 	return (
 		<div id='home'>
 			<div id='chat-controls' className='d-flex gap-2 p-2'>
+				<div className='flex-grow-1'>
+					<label htmlFor='mode-select' className='form-label'>
+						Mode
+					</label>
+					<select
+						id='mode-select'
+						className='form-select'
+						value={chatMode}
+						onChange={(e) => setChatMode(e.target.value as 'chat' | 'agent')}
+					>
+						<option value='chat'>Chat</option>
+						<option value='agent'>Agent</option>
+					</select>
+				</div>
 				<div className='flex-grow-1'>
 					<label htmlFor='provider-select' className='form-label'>
 						Provider
@@ -162,7 +240,7 @@ const Home = () => {
 						>
 							<div className='card-body py-2 px-3'>
 								<p className='card-text' style={{ whiteSpace: 'pre-wrap' }}>
-									{message.text}
+									{message.sender === 'ai' && message.text === '' ? '...' : message.text}
 								</p>
 							</div>
 						</div>
