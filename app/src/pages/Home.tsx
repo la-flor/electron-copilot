@@ -1,9 +1,9 @@
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core';
 import { FormEvent, useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { streamAgentResponse } from '../services/agent';
 import { streamComplete } from '../services/stream';
 import { OllamaModel } from '../shared/interfaces/database.interface';
-import { streamAgentResponse } from '../services/agent';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core';
 import './home.scss';
 
 interface ChatMessage {
