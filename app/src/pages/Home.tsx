@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { streamComplete } from '../services/stream';
 import { OllamaModel } from '../shared/interfaces/database.interface';
 import { streamAgentResponse } from '../services/agent';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core';
 import './home.scss';
 
 interface ChatMessage {

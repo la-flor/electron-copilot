@@ -1,5 +1,5 @@
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { BaseMessage, HumanMessage } from '@langchain/core';
 import { Runnable } from '@langchain/core/runnables';
 import { END, StateGraph } from '@langchain/langgraph';
 import { ToolNode } from '@langchain/langgraph/prebuilt';
