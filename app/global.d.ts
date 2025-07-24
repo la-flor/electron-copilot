@@ -72,12 +72,29 @@ declare global {
 				) => Promise<{ success: boolean; apiKey?: ApiKey; message?: string }>;
 			};
 			ollama: {
-				listModels: (userId: number) => Promise<{
+				listModels: (
+					userId: number,
+				) => Promise<{
 					success: boolean;
 					models?: OllamaModel[];
 					message?: string;
 				}>;
 			};
+		};
+		agent: {
+			stream: (
+				channel: string,
+				userInput: string,
+				options: { provider: 'ollama'; model: string; history: any[] },
+			) => void;
+			on: (
+				channel: string,
+				listener: (event: any, ...args: any[]) => void,
+			) => void;
+			off: (
+				channel: string,
+				listener: (event: any, ...args: any[]) => void,
+			) => void;
 		};
 	}
 }

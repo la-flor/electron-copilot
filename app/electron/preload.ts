@@ -8,6 +8,26 @@ import {
 	User,
 } from '../../app/src/shared/interfaces/database.interface';
 
+contextBridge.exposeInMainWorld('agent', {
+	stream: (
+		channel: string,
+		userInput: string,
+		options: {
+			provider: 'ollama';
+			model: string;
+			history: any[]; // Avoid importing langchain types in preload
+		},
+	) => {
+		ipcRenderer.send('agent:stream', { channel, userInput, options });
+	},
+	on: (channel: string, listener: (event: any, ...args: any[]) => void) => {
+		ipcRenderer.on(channel, listener);
+	},
+	off: (channel: string, listener: (event: any, ...args: any[]) => void) => {
+		ipcRenderer.removeListener(channel, listener);
+	},
+});
+
 contextBridge.exposeInMainWorld('db', {
 	user: {
 		fetchUsers: (): Promise<User[]> =>

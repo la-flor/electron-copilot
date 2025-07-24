@@ -1,7 +1,5 @@
 import { FormEvent, useContext, useEffect, useState } from 'react';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { AuthContext } from '../context/AuthContext';
-import { streamAgentResponse } from '../services/agent';
 import { streamComplete } from '../services/stream';
 import { OllamaModel } from '../shared/interfaces/database.interface';
 import './home.scss';
@@ -81,14 +79,51 @@ const Home = () => {
 		setUserPrompt('');
 
 		try {
-			let stream;
 			if (chatMode === 'agent') {
-				const history: BaseMessage[] = response.map((msg) =>
-					msg.sender === 'user'
-						? new HumanMessage(msg.text)
-						: new AIMessage(msg.text),
-				);
-				stream = streamAgentResponse(currentPrompt, {
+				const history = response.map((msg) => ({
+					type: msg.sender === 'user' ? 'human' : 'ai',
+					content: msg.text,
+				}));
+
+				const channel = `agent-response-${Date.now()}`;
+
+				const handleData = (_event: any, { chunk }: { chunk: string }) => {
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: lastMessage.text + chunk,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+				};
+
+				const handleError = (_event: any, { message }: { message: string }) => {
+					console.error('Agent stream error:', message);
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: `An error occurred: ${message}`,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+					cleanup();
+				};
+
+				const cleanup = () => {
+					window.agent.off(`${channel}-data`, handleData);
+					window.agent.off(`${channel}-end`, cleanup);
+					window.agent.off(`${channel}-error`, handleError);
+				};
+
+				window.agent.on(`${channel}-data`, handleData);
+				window.agent.on(`${channel}-end`, cleanup);
+				window.agent.on(`${channel}-error`, handleError);
+
+				window.agent.stream(channel, currentPrompt, {
 					provider: 'ollama',
 					model,
 					history,
@@ -103,19 +138,18 @@ const Home = () => {
 				const fullPrompt = historyForPrompt
 					? `${historyForPrompt}\nUser: ${currentPrompt}`
 					: `User: ${currentPrompt}`;
-				stream = streamComplete(fullPrompt);
-			}
-
-			for await (const { chunk } of stream) {
-				setResponse((prev) => {
-					if (prev.length === 0) return [];
-					const lastMessage = prev[prev.length - 1];
-					const updatedLastMessage = {
-						...lastMessage,
-						text: lastMessage.text + chunk,
-					};
-					return [...prev.slice(0, -1), updatedLastMessage];
-				});
+				const stream = streamComplete(fullPrompt);
+				for await (const { chunk } of stream) {
+					setResponse((prev) => {
+						if (prev.length === 0) return [];
+						const lastMessage = prev[prev.length - 1];
+						const updatedLastMessage = {
+							...lastMessage,
+							text: lastMessage.text + chunk,
+						};
+						return [...prev.slice(0, -1), updatedLastMessage];
+					});
+				}
 			}
 		} catch (err) {
 			console.log(err);

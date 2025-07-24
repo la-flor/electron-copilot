@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import started from 'electron-squirrel-startup';
 import path from 'path';
+import { registerAgentHandlers } from './agent';
 import { registerDatabaseHandlers } from './database';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -10,6 +11,7 @@ if (started) {
 
 // Register database IPC handlers
 registerDatabaseHandlers(ipcMain, app);
+registerAgentHandlers(ipcMain);
 
 const createWindow = () => {
 	// Create the browser window.
