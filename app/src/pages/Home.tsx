@@ -1,5 +1,5 @@
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core';
 import { FormEvent, useContext, useEffect, useState } from 'react';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { AuthContext } from '../context/AuthContext';
 import { streamAgentResponse } from '../services/agent';
 import { streamComplete } from '../services/stream';

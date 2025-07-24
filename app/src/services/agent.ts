@@ -1,8 +1,8 @@
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { BaseMessage, HumanMessage } from '@langchain/core';
-import { Runnable } from '@langchain/core/runnables';
-import { END, StateGraph } from '@langchain/langgraph';
-import { ToolNode } from '@langchain/langgraph/prebuilt';
+import { ChatOllama } from '@langchain/community/chat_models/ollama/web';
+import { BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { type Runnable } from '@langchain/core/runnables';
+import { END, StateGraph } from '@langchain/langgraph/web';
+import { ToolNode } from '@langchain/langgraph/prebuilt/web';
 import { tools } from './tools';
 
 export interface AgentState {
