@@ -1,5 +1,6 @@
 import Models from '../components/Models';
 import RunningModels from '../components/RunningModels';
+import TokenUsageChart from '../components/TokenUsageChart';
 
 const Dashboard = () => {
 	return (
@@ -11,6 +12,12 @@ const Dashboard = () => {
 
 				<div className='col'>
 					<RunningModels />
+				</div>
+			</div>
+
+			<div className='row mt-4'>
+				<div className='col'>
+					<TokenUsageChart />
 				</div>
 			</div>
 
@@ -40,6 +47,8 @@ const Dashboard = () => {
 								id='tokens'
 								name='tokens'
 								className='form-check-input'
+								checked={true}
+								defaultChecked
 							/>
 							<label htmlFor='tokens' className='form-check-label'>
 								Tokens

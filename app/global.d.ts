@@ -2,6 +2,7 @@ import {
 	ApiKey,
 	Automation,
 	OllamaModel,
+	TokenUsage,
 	User,
 } from './src/shared/interfaces/database.interface';
 
@@ -79,6 +80,22 @@ declare global {
 					models?: OllamaModel[];
 					message?: string;
 				}>;
+			};
+			tokenUsage: {
+				recordTokenUsage: (
+					tokenUsage: Omit<TokenUsage, 'id' | 'create_time'>,
+				) => Promise<{ success: boolean; id?: number; message?: string }>;
+				getTokenUsageByDate: (
+					userId: number,
+					startDate: string,
+					endDate: string,
+				) => Promise<{ success: boolean; data?: any[]; message?: string }>;
+				getTokenUsageSummary: (
+					userId: number,
+				) => Promise<{ success: boolean; data?: any; message?: string }>;
+				getTokenUsageByModel: (
+					userId: number,
+				) => Promise<{ success: boolean; data?: any[]; message?: string }>;
 			};
 		};
 		agent: {
