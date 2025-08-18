@@ -11,6 +11,13 @@ interface ChatMessage {
 	provider: string;
 }
 
+// Helper function to estimate tokens in text
+const countTokens = (text: string) => {
+	// This is a very simple approximation - in a real app, use a proper tokenizer
+	// For GPT models, approximately 1 token = 4 characters in English
+	return Math.ceil(text.length / 4);
+};
+
 const Home = () => {
 	const { user } = useContext(AuthContext);
 	const [chatMode, setChatMode] = useState<'chat' | 'agent'>('chat');
@@ -87,7 +94,14 @@ const Home = () => {
 
 				const channel = `agent-response-${Date.now()}`;
 
+				// Calculate input tokens
+				const inputTokens = countTokens(currentPrompt);
+				let outputTokens = 0;
+
 				const handleData = (_event: any, { chunk }: { chunk: string }) => {
+					// Count tokens from this chunk
+					outputTokens += countTokens(chunk);
+
 					setResponse((prev) => {
 						if (prev.length === 0) return [];
 						const lastMessage = prev[prev.length - 1];
@@ -115,7 +129,45 @@ const Home = () => {
 
 				const cleanup = () => {
 					window.agent.off(`${channel}-data`, handleData);
-					window.agent.off(`${channel}-end`, cleanup);
+					window.agent.off(`${channel}-end`, () => {
+						// Record token usage when the stream ends
+						if (user) {
+							try {
+								// Format the date as YYYY-MM-DD
+								const today = new Date();
+								const date = today.toISOString().split('T')[0];
+
+								// Prepare token usage data
+								const tokenUsage = {
+									user_id: user.id,
+									provider,
+									model,
+									conversation_id: `agent_${Date.now()}`,
+									date,
+									input_tokens: inputTokens,
+									output_tokens: outputTokens,
+									total_tokens: inputTokens + outputTokens,
+								};
+
+								// Save token usage to the database
+								window.db.tokenUsage
+									.recordTokenUsage(tokenUsage)
+									.then((result) => {
+										if (!result.success) {
+											console.error(
+												'Failed to record token usage:',
+												result.message,
+											);
+										}
+									})
+									.catch((error) => {
+										console.error('Error recording token usage:', error);
+									});
+							} catch (error) {
+								console.error('Failed to record token usage:', error);
+							}
+						}
+					});
 					window.agent.off(`${channel}-error`, handleError);
 				};
 
@@ -127,6 +179,7 @@ const Home = () => {
 					provider: 'ollama',
 					model,
 					history,
+					userId: user?.id, // Pass the user ID to the agent
 				});
 			} else {
 				const historyForPrompt = response
@@ -139,7 +192,15 @@ const Home = () => {
 					? `${historyForPrompt}\nUser: ${currentPrompt}`
 					: `User: ${currentPrompt}`;
 				const stream = streamComplete(fullPrompt);
+
+				// Count input tokens
+				const inputTokens = countTokens(fullPrompt);
+				let outputTokens = 0;
+
 				for await (const { chunk } of stream) {
+					// Count output tokens from each chunk
+					outputTokens += countTokens(chunk);
+
 					setResponse((prev) => {
 						if (prev.length === 0) return [];
 						const lastMessage = prev[prev.length - 1];
@@ -149,6 +210,44 @@ const Home = () => {
 						};
 						return [...prev.slice(0, -1), updatedLastMessage];
 					});
+				}
+
+				// Record token usage after streaming completes
+				if (user) {
+					try {
+						// Format the date as YYYY-MM-DD
+						const today = new Date();
+						const date = today.toISOString().split('T')[0];
+
+						// Prepare token usage data
+						const tokenUsage = {
+							user_id: user.id,
+							provider,
+							model,
+							conversation_id: `chat_${Date.now()}`,
+							date,
+							input_tokens: inputTokens,
+							output_tokens: outputTokens,
+							total_tokens: inputTokens + outputTokens,
+						};
+
+						// Save token usage to the database
+						window.db.tokenUsage
+							.recordTokenUsage(tokenUsage)
+							.then((result) => {
+								if (!result.success) {
+									console.error(
+										'Failed to record token usage:',
+										result.message,
+									);
+								}
+							})
+							.catch((error) => {
+								console.error('Error recording token usage:', error);
+							});
+					} catch (error) {
+						console.error('Failed to record token usage:', error);
+					}
 				}
 			}
 		} catch (err) {
@@ -240,7 +339,9 @@ const Home = () => {
 						>
 							<div className='card-body py-2 px-3'>
 								<p className='card-text' style={{ whiteSpace: 'pre-wrap' }}>
-									{message.sender === 'ai' && message.text === '' ? '...' : message.text}
+									{message.sender === 'ai' && message.text === ''
+										? '...'
+										: message.text}
 								</p>
 							</div>
 						</div>

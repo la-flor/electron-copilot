@@ -3,12 +3,15 @@ import { z } from 'zod';
 
 const weatherTool = new DynamicStructuredTool({
 	name: 'get_weather',
-	description: 'Get the current weather for a specified location. If no location is provided, uses the user\'s current location.',
+	description:
+		"Get the current weather for a specified location. If no location is provided, uses the user's current location.",
 	schema: z.object({
 		location: z
 			.string()
 			.optional()
-			.describe('The city and state, e.g., San Francisco, CA. If not provided, uses user\'s current location.'),
+			.describe(
+				"The city and state, e.g., San Francisco, CA. If not provided, uses user's current location.",
+			),
 	}),
 	func: async ({ location }) => {
 		try {
@@ -67,7 +70,7 @@ const weatherTool = new DynamicStructuredTool({
 				) {
 					return `Error: Could not find location: ${location}. Please try a different format like "San Francisco" or "London".`;
 				}
-				
+
 				latitude = geocodeData.results[0].latitude;
 				longitude = geocodeData.results[0].longitude;
 				locationName = geocodeData.results[0].name;
