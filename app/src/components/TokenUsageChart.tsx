@@ -250,10 +250,15 @@ const TokenUsageChart = () => {
 												cx='50%'
 												cy='50%'
 												labelLine={false}
-												label={({ name, percent }) =>
-													`${name}: ${(percent * 100).toFixed(0)}%`
-												}
-												outerRadius={80}
+												label={({ name, percent }) => {
+													// Truncate long model names for the label
+													const shortName =
+														name.length > 8
+															? `${name.substring(0, 8)}...`
+															: name;
+													return `${shortName}: ${(percent * 100).toFixed(0)}%`;
+												}}
+												outerRadius={70}
 												fill='#8884d8'
 												dataKey='total_tokens'
 												nameKey='model'
@@ -275,11 +280,17 @@ const TokenUsageChart = () => {
 										<BarChart
 											layout='vertical'
 											data={tokenDataByModel}
-											margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+											margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
 										>
 											<CartesianGrid strokeDasharray='3 3' />
 											<XAxis type='number' />
-											<YAxis dataKey='model' type='category' scale='band' />
+											<YAxis
+												dataKey='model'
+												type='category'
+												scale='band'
+												tick={{ textAnchor: 'end', width: 100 }}
+												width={100}
+											/>
 											<Tooltip formatter={(value) => value.toLocaleString()} />
 											<Legend />
 											<Bar
