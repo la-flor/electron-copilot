@@ -6,6 +6,7 @@ import path from 'path';
 import {
 	ApiKey,
 	Automation,
+	TokenUsage,
 	User,
 } from '../src/shared/interfaces/database.interface';
 
@@ -81,6 +82,22 @@ const initializeDatabaseConnection = (app: App) => {
 			delete_time TEXT,
 			FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE,
 			UNIQUE(user_id, provider)
+		) STRICT;
+	`);
+
+	db.exec(`
+		CREATE TABLE IF NOT EXISTS "token_usage" (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			provider TEXT NOT NULL,
+			model TEXT NOT NULL,
+			conversation_id TEXT,
+			date TEXT NOT NULL,
+			input_tokens INTEGER NOT NULL,
+			output_tokens INTEGER NOT NULL,
+			total_tokens INTEGER NOT NULL,
+			create_time TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
 		) STRICT;
 	`);
 };
@@ -631,4 +648,85 @@ export const registerDatabaseHandlers = (ipcMain: IpcMain, app: App) => {
 			}
 		},
 	);
+
+	// Token Usage Handlers
+	ipcMain.handle(
+		'database:recordTokenUsage',
+		(_event, tokenUsage: Omit<TokenUsage, 'id' | 'create_time'>) => {
+			try {
+				const stmt = db.prepare(
+					`INSERT INTO token_usage 
+				(user_id, provider, model, conversation_id, date, input_tokens, output_tokens, total_tokens) 
+				VALUES 
+				(@user_id, @provider, @model, @conversation_id, @date, @input_tokens, @output_tokens, @total_tokens)`,
+				);
+				const info = stmt.run(tokenUsage);
+				return { success: true, id: info.lastInsertRowid };
+			} catch (error: any) {
+				console.error('Failed to record token usage:', error);
+				return { success: false, message: error.message };
+			}
+		},
+	);
+
+	ipcMain.handle(
+		'database:getTokenUsageByDate',
+		(_event, userId: number, startDate: string, endDate: string) => {
+			try {
+				const stmt = db.prepare(
+					`SELECT 
+					date, 
+					SUM(input_tokens) as input_tokens, 
+					SUM(output_tokens) as output_tokens, 
+					SUM(total_tokens) as total_tokens 
+				FROM token_usage 
+				WHERE user_id = ? AND date BETWEEN ? AND ? 
+				GROUP BY date 
+				ORDER BY date ASC`,
+				);
+				const data = stmt.all(userId, startDate, endDate);
+				return { success: true, data };
+			} catch (error: any) {
+				console.error('Failed to get token usage by date:', error);
+				return { success: false, message: error.message };
+			}
+		},
+	);
+
+	ipcMain.handle('database:getTokenUsageSummary', (_event, userId: number) => {
+		try {
+			const stmt = db.prepare(
+				`SELECT 
+					SUM(input_tokens) as total_input_tokens, 
+					SUM(output_tokens) as total_output_tokens, 
+					SUM(total_tokens) as overall_total_tokens 
+				FROM token_usage 
+				WHERE user_id = ?`,
+			);
+			const data = stmt.get(userId);
+			return { success: true, data };
+		} catch (error: any) {
+			console.error('Failed to get token usage summary:', error);
+			return { success: false, message: error.message };
+		}
+	});
+
+	ipcMain.handle('database:getTokenUsageByModel', (_event, userId: number) => {
+		try {
+			const stmt = db.prepare(
+				`SELECT 
+					model, 
+					SUM(total_tokens) as total_tokens 
+				FROM token_usage 
+				WHERE user_id = ? 
+				GROUP BY model 
+				ORDER BY total_tokens DESC`,
+			);
+			const data = stmt.all(userId);
+			return { success: true, data };
+		} catch (error: any) {
+			console.error('Failed to get token usage by model:', error);
+			return { success: false, message: error.message };
+		}
+	});
 };

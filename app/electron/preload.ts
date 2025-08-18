@@ -5,6 +5,7 @@ import {
 	ApiKey,
 	Automation,
 	OllamaModel,
+	TokenUsage,
 	User,
 } from '../../app/src/shared/interfaces/database.interface';
 
@@ -101,5 +102,30 @@ contextBridge.exposeInMainWorld('db', {
 			error?: string;
 			message?: string;
 		}> => ipcRenderer.invoke('database:testExecuteAutomation', id),
+	},
+	tokenUsage: {
+		recordTokenUsage: (
+			tokenUsage: Omit<TokenUsage, 'id' | 'create_time'>,
+		): Promise<{ success: boolean; id?: number; message?: string }> =>
+			ipcRenderer.invoke('database:recordTokenUsage', tokenUsage),
+		getTokenUsageByDate: (
+			userId: number,
+			startDate: string,
+			endDate: string,
+		): Promise<{ success: boolean; data?: any[]; message?: string }> =>
+			ipcRenderer.invoke(
+				'database:getTokenUsageByDate',
+				userId,
+				startDate,
+				endDate,
+			),
+		getTokenUsageSummary: (
+			userId: number,
+		): Promise<{ success: boolean; data?: any; message?: string }> =>
+			ipcRenderer.invoke('database:getTokenUsageSummary', userId),
+		getTokenUsageByModel: (
+			userId: number,
+		): Promise<{ success: boolean; data?: any[]; message?: string }> =>
+			ipcRenderer.invoke('database:getTokenUsageByModel', userId),
 	},
 });

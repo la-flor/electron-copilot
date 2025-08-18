@@ -54,3 +54,16 @@ export interface OllamaModel {
 	size: number;
 	digest: string;
 }
+
+export interface TokenUsage {
+	id: number;
+	user_id: number;
+	provider: string;
+	model: string;
+	conversation_id?: string;
+	date: string;
+	input_tokens: number;
+	output_tokens: number;
+	total_tokens: number;
+	create_time: string;
+}
